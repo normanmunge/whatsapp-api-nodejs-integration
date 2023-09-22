@@ -19,6 +19,9 @@ Need to install this to your local computer:
    `sudo cp ngrok /usr/bin/local`
 3. Afterwards, login into the ngrok site and access your unique authtoken to authenticate and activate your ngrok agent:
    `ngrok config add-authtoken (unique authtoken)`
+4. To use it, on your terminal:
+   http: `ngrok http [PORT]`
+   https: `ngrok http https://localhost:[PORT]`
 
 ### Other Resources
 
