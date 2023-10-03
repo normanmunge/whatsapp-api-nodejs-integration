@@ -22,6 +22,7 @@ Need to install this to your local computer:
 4. To use it, on your terminal:
    http: `ngrok http [PORT]`
    https: `ngrok http https://localhost:[PORT]`
+   inspector: `http://127.0.0.1:4040`
 
 ### Other Resources
 
