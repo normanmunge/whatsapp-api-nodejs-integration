@@ -1,6 +1,8 @@
 // import { initializeApp } from 'firebase/app';
 // import { getAuth, onAuthStateChanged } from 'firebase/auth';
 // import { getFirestore, collection, getDocs, getDoc } from 'firebase/firestore';
+require('dotenv').config();
+
 const {
   initializeApp,
   applicationDefault,
@@ -14,7 +16,7 @@ const {
   Filter,
 } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
-const serviceAccount = require('./wekeza-400900-da2ba1ac236f.json');
+const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 //FIREBASE
 // const firebaseApp = initializeApp({

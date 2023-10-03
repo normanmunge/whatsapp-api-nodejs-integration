@@ -29,7 +29,8 @@ const getTextMessage = (recipient, text) => {
     template: {
       name: 'welcome_to_wekeza',
       language: {
-        code: 'en_GB',
+        //code: 'en_GB',
+        code: 'sw',
       },
     },
   });
