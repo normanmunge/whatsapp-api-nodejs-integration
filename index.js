@@ -9,6 +9,10 @@ const path = require('path');
 
 const port = process.env.PORT || 3000;
 
+//firebase
+const User = require('./firebase/User');
+// const firebase = require('./firebase/config');
+
 //routes
 const welcomeRouter = require('./routes/welcome');
 const responseRouter = require('./routes/responses');
@@ -39,6 +43,30 @@ app.post('/responses', async (req, res) => {
   res.sendStatus(200);
   console.log('THE REQUEST NOW', req.body);
   return;
+});
+
+app.post('/create-user', async (req, res) => {
+  const data = req.body;
+  try {
+    const memberRef = User.doc();
+    await memberRef.set(data);
+  } catch (error) {
+    console.log('THE ERROR', error);
+    res.send({ error: error });
+    res.sendStatus(403);
+    return;
+  }
+
+  res.send({ msg: 'User added' });
+});
+
+app.get('/users', async (req, res) => {
+  const snapshot = await User.get();
+  snapshot.forEach((doc) => {
+    console.log('THE USERS ARE:', doc.data());
+  });
+
+  res.send({ msg: snapshot });
 });
 
 // app.get('/', (req, res) => {
