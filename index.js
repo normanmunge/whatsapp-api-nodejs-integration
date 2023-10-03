@@ -8,6 +8,7 @@ const https = require('https');
 const path = require('path');
 
 const port = process.env.PORT || 3000;
+const verify_token = process.env.VERIFY_TOKEN;
 
 //firebase
 const User = require('./firebase/User');
@@ -23,14 +24,14 @@ app.get('/test', (req, res) => {
   return;
 });
 
-app.use('/welcome', welcomeRouter);
-
-const verify_token = process.env.VERIFY_TOKEN;
-
 app.get('/', (req, res) => {
   res.send('Welcome to Wekeza');
   return;
 });
+
+//WHATSAPP API ENDPOINTS
+
+app.use('/welcome', welcomeRouter);
 
 app.post('/responses', async (req, res) => {
   let body = req.body;
@@ -45,6 +46,71 @@ app.post('/responses', async (req, res) => {
   return;
 });
 
+// app.get("/webhooks", async (req, res) => {
+//   const data = req.body;
+//   console.log("THE INCOMING BODY FROM WHATSAPP", data);
+
+//   res.sendStatus(200);
+//   return;
+// });
+
+app.post('/webhooks', async (req, res) => {
+  const user_reply = req.body.entry[0];
+
+  //webhook
+  const { id, changes } = user_reply;
+  const webhook_id = id;
+
+  console.log('THE WEBHOOK ID:', webhook_id);
+
+  //business details
+  const { value } = changes[0];
+
+  const display_phone_number = value.metadata.display_phone_number;
+  const phone_number_id = value.metadata.phone_number_id;
+
+  console.log(
+    'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
+    display_phone_number,
+    '& PHONE ID',
+    phone_number_id
+  );
+
+  //client profile details
+  const { profile, wa_id } = value.contacts[0];
+  const user_reply_name = profile.name;
+  const user_reply_phone_number = wa_id;
+
+  console.log(
+    'THE CLIENT PROFILE',
+    user_reply_name,
+    '& THE PHONE NUMBER',
+    user_reply_phone_number
+  );
+
+  //client message details
+  const { timestamp, type, text } = value.messages[0];
+  const message_time = timestamp;
+  const message_type = type;
+  const message_id = value.messages[0].id;
+  const message_text = text.body;
+
+  console.log(
+    'THE MESSAGE DETAILS: TIME',
+    message_time,
+    '& THE TYPE',
+    message_type,
+    '& THE MESSAGE ID',
+    message_id,
+    '& THE MESSAGE TEXT',
+    message_text
+  );
+
+  res.sendStatus(200);
+  return;
+});
+
+//FIREBASE ENDPOINTS
 app.post('/create-user', async (req, res) => {
   const data = req.body;
   try {
