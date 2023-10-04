@@ -29,14 +29,27 @@ const getTextMessage = (recipient, text) => {
     template: {
       name: 'welcome_to_wekeza',
       language: {
-        //code: 'en_GB',
-        code: 'sw',
+        code: 'en_GB',
+        // code: 'sw',
       },
     },
   });
 };
 
+const message_ids = [];
+const getMessageId = (messageId, recipient, message) => {
+  message_ids.unshift({
+    id: messageId,
+    phone: recipient,
+    text: message,
+  });
+
+  return message_ids;
+};
+
 module.exports = {
   sendMessage: sendMessage,
   getTextMessage: getTextMessage,
+  getMessageId: getMessageId,
+  message_ids,
 };
