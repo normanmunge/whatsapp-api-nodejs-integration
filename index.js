@@ -59,89 +59,91 @@ app.post('/responses', async (req, res) => {
 // });
 let cache_webhook_ids = [];
 
-try {
-  let received_message;
+async () => {
+  try {
+    let received_message;
 
-  app.post('/webhooks', async (req, res) => {
-    const user_reply = req.body.entry[0];
+    const webhooks = await app.post('/webhooks', async (req, res) => {
+      const user_reply = req.body.entry[0];
 
-    //webhook
-    const { id, changes } = user_reply;
-    cache_webhook_ids.unshift(id);
+      //webhook
+      const { id, changes } = user_reply;
+      cache_webhook_ids.unshift(id);
 
-    const webhook_id = id;
+      const webhook_id = id;
 
-    console.log('THE WEBHOOK ID:', webhook_id);
+      console.log('THE WEBHOOK ID:', webhook_id);
 
-    if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
-      //business details
-      const { value } = changes[0];
+      if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
+        //business details
+        const { value } = changes[0];
 
-      const display_phone_number = value.metadata.display_phone_number;
-      const phone_number_id = value.metadata.phone_number_id;
+        const display_phone_number = value.metadata.display_phone_number;
+        const phone_number_id = value.metadata.phone_number_id;
 
-      console.log(
-        'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
-        display_phone_number,
-        '& PHONE ID',
-        phone_number_id
-      );
+        console.log(
+          'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
+          display_phone_number,
+          '& PHONE ID',
+          phone_number_id
+        );
 
-      //client profile details
-      const { profile, wa_id } = value.contacts[0];
-      const user_reply_name = profile.name;
-      const user_reply_phone_number = wa_id;
+        //client profile details
+        const { profile, wa_id } = value.contacts[0];
+        const user_reply_name = profile.name;
+        const user_reply_phone_number = wa_id;
 
-      console.log(
-        'THE CLIENT PROFILE',
-        user_reply_name,
-        '& THE PHONE NUMBER',
-        user_reply_phone_number
-      );
+        console.log(
+          'THE CLIENT PROFILE',
+          user_reply_name,
+          '& THE PHONE NUMBER',
+          user_reply_phone_number
+        );
 
-      //client message details
-      const { timestamp, type, text, button } = value.messages[0];
-      const message_time = timestamp;
-      const message_type = type;
-      const message_id = value.messages[0].id;
+        //client message details
+        const { timestamp, type, text, button } = value.messages[0];
+        const message_time = timestamp;
+        const message_type = type;
+        const message_id = value.messages[0].id;
 
-      let message_text = '';
-      switch (message_type) {
-        case 'text':
-          message_text = text.body;
-          break;
-        case 'button':
-          message_text = button.text;
-        default:
-          break;
+        let message_text = '';
+        switch (message_type) {
+          case 'text':
+            message_text = text.body;
+            break;
+          case 'button':
+            message_text = button.text;
+          default:
+            break;
+        }
+
+        console.log(
+          'THE MESSAGE DETAILS: TIME',
+          message_time,
+          '& THE TYPE',
+          message_type,
+          '& THE MESSAGE ID',
+          message_id,
+          '& THE MESSAGE TEXT',
+          message_text
+        );
+
+        received_message = getMessageId(
+          message_id,
+          user_reply_phone_number,
+          message_text
+        );
+        app.set('received_message', received_message);
+
+        res.sendStatus(200);
       }
+    });
 
-      console.log(
-        'THE MESSAGE DETAILS: TIME',
-        message_time,
-        '& THE TYPE',
-        message_type,
-        '& THE MESSAGE ID',
-        message_id,
-        '& THE MESSAGE TEXT',
-        message_text
-      );
-
-      received_message = getMessageId(
-        message_id,
-        user_reply_phone_number,
-        message_text
-      );
-      app.set('received_message', received_message);
-
-      res.sendStatus(200);
-    }
-  });
-
-  app.use('/message-read', messageReadRouter);
-} catch (error) {
-  console.log('THE ERROR', error);
-}
+    const readMessage = await app.use('/message-read', messageReadRouter);
+  } catch (error) {
+    console.log('THE ERROR', error);
+  }
+};
 
 //FIREBASE ENDPOINTS
 app.post('/create-user', async (req, res) => {
