@@ -16,7 +16,11 @@ const User = require('./firebase/User');
 
 //routes
 const welcomeRouter = require('./routes/welcome');
+const messageReadRouter = require('./routes/message-read');
 const responseRouter = require('./routes/responses');
+
+//messages
+const { getMessageId } = require('./messages');
 
 app.get('/test', (req, res) => {
   console.log('THE PROCESS ENV', process.env.RECIPIENT_WAID);
@@ -53,62 +57,91 @@ app.post('/responses', async (req, res) => {
 //   res.sendStatus(200);
 //   return;
 // });
+let cache_webhook_ids = [];
 
-app.post('/webhooks', async (req, res) => {
-  const user_reply = req.body.entry[0];
+try {
+  let received_message;
 
-  //webhook
-  const { id, changes } = user_reply;
-  const webhook_id = id;
+  app.post('/webhooks', async (req, res) => {
+    const user_reply = req.body.entry[0];
 
-  console.log('THE WEBHOOK ID:', webhook_id);
+    //webhook
+    const { id, changes } = user_reply;
+    cache_webhook_ids.unshift(id);
 
-  //business details
-  const { value } = changes[0];
+    const webhook_id = id;
 
-  const display_phone_number = value.metadata.display_phone_number;
-  const phone_number_id = value.metadata.phone_number_id;
+    console.log('THE WEBHOOK ID:', webhook_id);
 
-  console.log(
-    'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
-    display_phone_number,
-    '& PHONE ID',
-    phone_number_id
-  );
+    if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
+      //business details
+      const { value } = changes[0];
 
-  //client profile details
-  const { profile, wa_id } = value.contacts[0];
-  const user_reply_name = profile.name;
-  const user_reply_phone_number = wa_id;
+      const display_phone_number = value.metadata.display_phone_number;
+      const phone_number_id = value.metadata.phone_number_id;
 
-  console.log(
-    'THE CLIENT PROFILE',
-    user_reply_name,
-    '& THE PHONE NUMBER',
-    user_reply_phone_number
-  );
+      console.log(
+        'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
+        display_phone_number,
+        '& PHONE ID',
+        phone_number_id
+      );
 
-  //client message details
-  const { timestamp, type, text } = value.messages[0];
-  const message_time = timestamp;
-  const message_type = type;
-  const message_id = value.messages[0].id;
-  const message_text = text.body;
+      //client profile details
+      const { profile, wa_id } = value.contacts[0];
+      const user_reply_name = profile.name;
+      const user_reply_phone_number = wa_id;
 
-  console.log(
-    'THE MESSAGE DETAILS: TIME',
-    message_time,
-    '& THE TYPE',
-    message_type,
-    '& THE MESSAGE ID',
-    message_id,
-    '& THE MESSAGE TEXT',
-    message_text
-  );
+      console.log(
+        'THE CLIENT PROFILE',
+        user_reply_name,
+        '& THE PHONE NUMBER',
+        user_reply_phone_number
+      );
 
-  res.sendStatus(200);
-  return;
-});
+      //client message details
+      const { timestamp, type, text, button } = value.messages[0];
+      const message_time = timestamp;
+      const message_type = type;
+      const message_id = value.messages[0].id;
+
+      let message_text = '';
+      switch (message_type) {
+        case 'text':
+          message_text = text.body;
+          break;
+        case 'button':
+          message_text = button.text;
+        default:
+          break;
+      }
+
+      console.log(
+        'THE MESSAGE DETAILS: TIME',
+        message_time,
+        '& THE TYPE',
+        message_type,
+        '& THE MESSAGE ID',
+        message_id,
+        '& THE MESSAGE TEXT',
+        message_text
+      );
+
+      received_message = getMessageId(
+        message_id,
+        user_reply_phone_number,
+        message_text
+      );
+      app.set('received_message', received_message);
+
+      res.sendStatus(200);
+    }
+  });
+
+  app.use('/message-read', messageReadRouter);
+} catch (error) {
+  console.log('THE ERROR', error);
+}
 
 //FIREBASE ENDPOINTS
 app.post('/create-user', async (req, res) => {
