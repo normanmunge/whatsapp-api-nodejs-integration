@@ -16,11 +16,10 @@ const User = require('./firebase/User');
 
 //routes
 const welcomeRouter = require('./routes/welcome');
-const messageReadRouter = require('./routes/message-read');
 const responseRouter = require('./routes/responses');
 
 //messages
-const { getMessageId } = require('./messages');
+const { getMessageId, sendMessage, replyMessage } = require('./messages');
 
 app.get('/test', (req, res) => {
   console.log('THE PROCESS ENV', process.env.RECIPIENT_WAID);
@@ -65,35 +64,41 @@ app.post('/responses', async (req, res) => {
 // });
 let cache_webhook_ids = [];
 
-async () => {
-  try {
-    let received_message;
+try {
+  //let received_message;
 
-    const webhooks = await app.post('/webhooks', async (req, res) => {
-      const user_reply = req.body.entry[0];
+  app.post('/webhooks', async (req, res) => {
+    const user_reply = req.body.entry[0];
 
+    console.log('THE WEBHOOK reply:', user_reply);
+
+    if (user_reply) {
       //webhook
       const { id, changes } = user_reply;
       cache_webhook_ids.unshift(id);
 
       const webhook_id = id;
 
-      console.log('THE WEBHOOK ID:', webhook_id);
+      // console.log('THE WEBHOOK ID:', webhook_id);
 
-      if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
-        //business details
-        const { value } = changes[0];
+      // if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
+      //business details
+      const { value } = changes[0];
 
-        const display_phone_number = value.metadata.display_phone_number;
-        const phone_number_id = value.metadata.phone_number_id;
+      const display_phone_number = value.metadata.display_phone_number;
+      const phone_number_id = value.metadata.phone_number_id;
 
-        console.log(
-          'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
-          display_phone_number,
-          '& PHONE ID',
-          phone_number_id
-        );
+      // console.log(
+      //   'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
+      //   display_phone_number,
+      //   '& PHONE ID',
+      //   phone_number_id
+      // );
+      //console.log('THE PHONE NUMBER', value);
 
+      let user_reply_initiated = false;
+
+      if (typeof value['contacts'] !== 'undefined' && value.contacts.length) {
         //client profile details
         const { profile, wa_id } = value.contacts[0];
         const user_reply_name = profile.name;
@@ -134,22 +139,61 @@ async () => {
           message_text
         );
 
-        received_message = getMessageId(
-          message_id,
-          user_reply_phone_number,
-          message_text
-        );
-        app.set('received_message', received_message);
+        getMessageId(message_id, user_reply_phone_number, 'individual');
 
-        res.sendStatus(200);
+        const data = {
+          messaging_product: 'whatsapp',
+          status: 'read',
+          message_id: message_id,
+        };
+
+        console.log('THE DATA TO BE SENT AS READ', data);
+        if (data) {
+          await sendMessage(data)
+            .then((response) => {
+              console.log('THE RESPONSE WEBHOOK REPLY', response.data);
+              //res.end();
+            })
+            .then(() => {
+              user_reply_initiated = true;
+              // replyMessage(user_reply_initiated);
+            })
+            .catch((err) => {
+              console.log('THE ERROR:', err);
+              res.end();
+            });
+        }
       }
-    });
 
-    const readMessage = await app.use('/message-read', messageReadRouter);
-  } catch (error) {
-    console.log('THE ERROR', error);
-  }
-};
+      if (user_reply_initiated && typeof value['messages'] !== 'undefined') {
+        const message = value.messages[0];
+        const message_type = message.type;
+        const message_from = message.from; //user phone number;
+
+        switch (message_type) {
+          case 'button':
+            if (message.button.payload === 'Your Chama Profile') {
+              await replyMessage(user_reply_initiated, message_from);
+            } else if (message.button.payload === 'Send Contribution') {
+              console.log('HANDLE SEND CONTRIBUTION LOGIC');
+            }
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      return res.sendStatus(200);
+      // }
+    } else {
+      return res.sendStatus(500);
+    }
+  });
+} catch (error) {
+  console.log('THE ERROR', error);
+  return res.sendStatus(500);
+}
 
 //FIREBASE ENDPOINTS
 app.post('/create-user', async (req, res) => {
