@@ -33,6 +33,12 @@ app.get('/', (req, res) => {
   return;
 });
 
+//mpesa
+app.post('/mpesa', async (req, res) => {
+  console.log('HERE');
+  res.sendStatus(200);
+});
+
 //WHATSAPP API ENDPOINTS
 
 app.use('/welcome', welcomeRouter);
