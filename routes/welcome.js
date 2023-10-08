@@ -3,12 +3,19 @@ const router = express.Router();
 const body_parser = require('body-parser');
 require('dotenv').config();
 
-const { sendMessage, getTextMessage, getMessageId } = require('../messages');
+const {
+  sendMessage,
+  getWekezaWelcomeMessage,
+  getMessageId,
+} = require('../messages');
 
 router.use(body_parser.json());
 
 router.post('/', (req, res, next) => {
-  const data = getTextMessage(process.env.RECIPIENT_WAID, 'Welcome to Wekeza!');
+  const data = getWekezaWelcomeMessage(
+    process.env.RECIPIENT_WAID,
+    'Welcome to Wekeza!'
+  );
 
   sendMessage(data)
     .then((response) => {
