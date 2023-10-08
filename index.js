@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000;
 const verify_token = process.env.VERIFY_TOKEN;
 
 //firebase
-const User = require('./firebase/User');
+const { User, getMemberDetails } = require('./firebase/User');
 // const firebase = require('./firebase/config');
 
 //routes
@@ -111,6 +111,8 @@ try {
           user_reply_phone_number
         );
 
+        //TODO: Store the client details to our database.
+
         //client message details
         const { timestamp, type, text, button } = value.messages[0];
         const message_time = timestamp;
@@ -139,15 +141,20 @@ try {
           message_text
         );
 
+        //TODO: Store the user message details to our logs, utilize getMessageId function ie phone, name, message_time, message_type, message_id, message_text
+        //After storing the logo, mark message as read
+
         getMessageId(message_id, user_reply_phone_number, 'individual');
 
+        /**
+         * Marks the message as received and read with the blue ticks check on Whatsapp.
+         */
         const data = {
           messaging_product: 'whatsapp',
           status: 'read',
           message_id: message_id,
         };
 
-        console.log('THE DATA TO BE SENT AS READ', data);
         if (data) {
           await sendMessage(data)
             .then((response) => {
@@ -169,6 +176,8 @@ try {
         const message = value.messages[0];
         const message_type = message.type;
         const message_from = message.from; //user phone number;
+
+        //TODO: Store the logs for the customer journey i.e their most frequently selected option.
 
         switch (message_type) {
           case 'button':
@@ -211,13 +220,9 @@ app.post('/create-user', async (req, res) => {
   res.send({ msg: 'User added' });
 });
 
-app.get('/users', async (req, res) => {
-  const snapshot = await User.get();
-  snapshot.forEach((doc) => {
-    console.log('THE USERS ARE:', doc.data());
-  });
-
-  res.send({ msg: snapshot });
+app.get('/chama-members', async (req, res) => {
+  const data = req.body;
+  res.send(getMemberDetails(data.phone));
 });
 
 // app.get('/', (req, res) => {
