@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const body_parser = require('body-parser');
+const cors = require('cors');
 const app = express().use(body_parser.json());
 const createError = require('http-errors');
 const fs = require('fs');
@@ -9,7 +10,7 @@ const path = require('path');
 
 const port = process.env.PORT || 3000;
 const verify_token = process.env.VERIFY_TOKEN;
-
+app.use(cors());
 //firebase
 const { User, getMemberDetails } = require('./firebase/User');
 // const firebase = require('./firebase/config');
@@ -17,6 +18,7 @@ const { User, getMemberDetails } = require('./firebase/User');
 //routes
 const welcomeRouter = require('./routes/welcome');
 const responseRouter = require('./routes/responses');
+const mpesaRouter = require('./mpesa/index');
 
 //messages
 const { getMessageId, sendMessage, replyMessage } = require('./messages');
@@ -33,13 +35,9 @@ app.get('/', (req, res) => {
 });
 
 //mpesa
-app.post('/mpesa', async (req, res) => {
-  console.log('HERE');
-  res.sendStatus(200);
-});
+app.use('/mpesa', mpesaRouter);
 
 //WHATSAPP API ENDPOINTS
-
 app.use('/welcome', welcomeRouter);
 
 app.post('/responses', async (req, res) => {
@@ -55,13 +53,6 @@ app.post('/responses', async (req, res) => {
   return;
 });
 
-// app.get("/webhooks", async (req, res) => {
-//   const data = req.body;
-//   console.log("THE INCOMING BODY FROM WHATSAPP", data);
-
-//   res.sendStatus(200);
-//   return;
-// });
 let cache_webhook_ids = [];
 
 try {
@@ -224,11 +215,6 @@ app.get('/chama-members', async (req, res) => {
   const data = req.body;
   res.send(getMemberDetails(data.phone));
 });
-
-// app.get('/', (req, res) => {
-//   console.log('WELCOME TO WEKEZA');
-//   return;
-// });
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
