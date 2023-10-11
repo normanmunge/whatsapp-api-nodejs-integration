@@ -48,7 +48,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
     // value.statuses.length &&
     // value.statuses[0].status === 'read'
   ) {
-    console.log('HERE SEND A REPLY NOW?');
+    console.log('HERE SEND A REPLY NOW?', user_reply_phone_number);
     //ToDO :: Query our database to find the user details based on their phone number and send a breakdown of their details
     // 1. The number of chamas they belong to
     // 2. The total amount of contributions
@@ -87,9 +87,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
 
       const { contribution_amount, deadline } = chama;
 
-      const reply_mockup = `Hey ${name} below is a breakdown of your chama: \n\n ${chama.name
-        .bold()
-        .italics()} \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES 30000 \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is James Muriithi (0726333555). \n Contributions should be sent by ${deadline} of ${chama_cycle_next_month} ${current_year}. \n\n`;
+      const reply_mockup = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES 30000 \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is James Muriithi (0726333555). \n Contributions should be sent by ${deadline} of ${chama_cycle_next_month} ${current_year}. \n\n`;
 
       const wekeza_reply = {
         messaging_product: 'whatsapp',
@@ -111,7 +109,6 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
           })
           .catch((err) => {
             console.log('THE ERROR:', err);
-            response.end();
           });
       }
     }
