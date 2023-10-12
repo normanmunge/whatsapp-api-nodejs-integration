@@ -78,16 +78,30 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
         'December',
       ];
 
-      const chama_cycle_next_month =
-        date.getMonth() > 12
-          ? months_of_the_year[date.getMonth() + 1]
-          : months_of_the_year[0];
+      // const chama_cycle_next_month =
+      //   date.getMonth() > 12
+      //     ? months_of_the_year[date.getMonth() + 1]
+      //     : months_of_the_year[0];
+      const chama_cycle_next_month = months_of_the_year[date.getMonth() + 1];
+
+      console.log(
+        'THE CHAMA CYCLE MONTH:',
+        chama_cycle_next_month,
+        'details about chama',
+        chama
+      );
 
       const current_year = date.getFullYear();
 
-      const { contribution_amount, deadline } = chama;
+      const { contribution_amount, deadline_date } = chama;
 
-      const reply_mockup = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES 30000 \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is James Muriithi (0726333555). \n Contributions should be sent by ${deadline} of ${chama_cycle_next_month} ${current_year}. \n\n`;
+      const date_suffix =
+        (deadline_date >= 4 && deadline_date <= 20) ||
+        (deadline_date >= 24 && deadline_date <= 30)
+          ? 'th'
+          : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
+
+      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES 30000 \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is James Muriithi (0726333555). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
 
       const wekeza_reply = {
         messaging_product: 'whatsapp',
@@ -96,7 +110,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
         type: 'text',
         text: {
           preview_url: false,
-          body: reply_mockup,
+          body: contribution_reply,
         },
       };
 
