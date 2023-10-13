@@ -13,6 +13,8 @@ const verify_token = process.env.VERIFY_TOKEN;
 app.use(cors());
 //firebase
 const { User, getMemberDetails } = require('./firebase/User');
+const { Joinlist } = require('./firebase/JoinList');
+
 // const firebase = require('./firebase/config');
 
 //routes
@@ -209,6 +211,24 @@ app.post('/create-user', async (req, res) => {
   }
 
   res.send({ msg: 'User added' });
+});
+
+app.post('join-wekeza-list', async (req, res) => {
+  const data = req.body;
+  const { name, email, phone } = req.body;
+  try {
+    const registrationRef = Joinlist.doc();
+    await registrationRef.set({
+      name: name,
+      email: email,
+      phone: phone,
+    });
+    res
+      .status(200)
+      .send({
+        data: `Happy to have you onboard! Our support team will reach out to you in the next few days.`,
+      });
+  } catch (error) {}
 });
 
 app.get('/chama-members', async (req, res) => {
