@@ -85,18 +85,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
         'December',
       ];
 
-      // const chama_cycle_next_month =
-      //   date.getMonth() > 12
-      //     ? months_of_the_year[date.getMonth() + 1]
-      //     : months_of_the_year[0];
       const chama_cycle_next_month = months_of_the_year[date.getMonth() + 1];
-
-      console.log(
-        'THE CHAMA CYCLE MONTH:',
-        chama_cycle_next_month,
-        'details about chama',
-        chama
-      );
 
       const current_year = date.getFullYear();
 
@@ -108,7 +97,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
           ? 'th'
           : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
 
-      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
+      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
 
       const wekeza_reply = {
         messaging_product: 'whatsapp',
@@ -121,7 +110,6 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
         },
       };
 
-      console.log('THE WEKEZA REPLY:', wekeza_reply);
       if (wekeza_reply) {
         sendMessage(wekeza_reply)
           .then((response) => {

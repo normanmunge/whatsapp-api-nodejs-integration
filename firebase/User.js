@@ -1,5 +1,6 @@
 const { db, collection } = require('./config');
 const { Chama, Reports, ChamaCycleCount } = require('./Chama');
+const { Filter } = require('firebase-admin/firestore');
 
 const User = db.collection('Members');
 
@@ -13,7 +14,6 @@ const getMemberDetails = async (phone_no) => {
     next_recipient_member = null;
 
   member_snapshot.forEach((doc) => {
-    console.log('THE USERS ARE:', doc.data());
     member = doc.data();
   });
 
@@ -48,7 +48,6 @@ const getMemberDetails = async (phone_no) => {
       .where('member_phone', '==', phone_number)
       .get();
     ind_chama_contribution.forEach((doc) => {
-      console.log('THE Individual CONTRIBUTIONS ARE:', doc.data());
       const { amount_received } = doc.data();
       ind_contributions.push(amount_received);
     });
@@ -59,32 +58,20 @@ const getMemberDetails = async (phone_no) => {
     );
 
     //Next recipient member
-    const nextRecipientMemberSnapshot = await User.where(
-      'chama',
-      '==',
-      chama
-    ).where('cycle_count', '==', cycle_count + 1);
+    const nextRecipientMemberSnapshot = await User.where('chama', '==', chama)
+      .where('cycle_count', '==', cycle_count + 1)
+      .get();
 
-    console.log('THE NEXT RECIPIENT', nextRecipientMemberSnapshot);
+    // const nextRecipientMemberSnapshot = await User.where(
+    //   Filter.and(
+    //     Filter.where('chama', '==', chama),
+    //     Filter.where('cycle_count', '==', cycle_count + 1)
+    //   )
+    // ).get();
 
     nextRecipientMemberSnapshot.forEach((doc) => {
       next_recipient_member = doc.data();
     });
-
-    console.log(
-      'THE MEMBER DATA IS:',
-      member,
-      'AND THE PROFILE:',
-      chama_profile,
-      'THE CONTRIBUTIONS:',
-      contributions,
-      'THE TOTAL CONTRIBUTIONS ARE:',
-      total_chama_contributions,
-      'THE INDIVIDUAL CONTRIBUTIONS ARE:',
-      ind_total_chama_contributions,
-      'THE NEXT RECIPIENT IS:',
-      next_recipient_member
-    );
 
     const details = {
       member: member,
