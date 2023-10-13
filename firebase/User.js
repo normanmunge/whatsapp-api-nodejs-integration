@@ -4,27 +4,39 @@ const { Filter } = require('firebase-admin/firestore');
 
 const User = db.collection('Members');
 
-const getMemberDetails = async (phone_no) => {
-  const phone = phone_no.toString();
-
+const getMember = async (phone) => {
   const member_snapshot = await User.where('phone_number', '==', phone).get();
 
-  let member,
-    chama_profile,
-    next_recipient_member = null;
+  let member = null;
 
   member_snapshot.forEach((doc) => {
     member = doc.data();
   });
 
   if (member) {
-    const { chama, cycle_count, name, phone_number, is_offical } = member;
+    return member;
+  }
 
-    const chama_snapshot = Chama.doc(chama);
-    const chama_doc = await chama_snapshot.get();
+  return null;
+};
+
+const getMemberDetails = async (phone_no) => {
+  const phone = phone_no.toString();
+
+  const dtls = await getMember(phone);
+  const { chama, cycle_count, name, phone_number, is_offical } = dtls;
+
+  if (chama) {
+    let chama_profile,
+      next_recipient_member = null;
+
+    const chama_member_snapshot = Chama.doc(chama);
+
+    const chama_doc = await chama_member_snapshot.get();
 
     if (!chama_doc.exists) {
       console.log('No such document');
+      return;
     } else {
       chama_profile = chama_doc.data();
     }
@@ -74,7 +86,7 @@ const getMemberDetails = async (phone_no) => {
     });
 
     const details = {
-      member: member,
+      member: dtls,
       chama: chama_profile,
       total_chama_contributions: total_chama_contributions,
       ind_total_chama_contributions: ind_total_chama_contributions,
@@ -83,7 +95,8 @@ const getMemberDetails = async (phone_no) => {
 
     return details;
   }
+
   return null;
 };
 
-module.exports = { User, getMemberDetails };
+module.exports = { User, getMember, getMemberDetails };
