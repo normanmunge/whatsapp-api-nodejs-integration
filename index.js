@@ -21,6 +21,7 @@ const { Joinlist } = require('./firebase/JoinList');
 const welcomeRouter = require('./routes/welcome');
 const responseRouter = require('./routes/responses');
 const mpesaRouter = require('./mpesa/index');
+const bankwaveRouter = require('./mpesa/onetap');
 
 //messages
 const { getMessageId, sendMessage, replyMessage } = require('./messages');
@@ -38,6 +39,9 @@ app.get('/', (req, res) => {
 
 //mpesa
 app.use('/mpesa', mpesaRouter);
+
+//bankwave
+app.use('/bankwave', bankwaveRouter);
 
 //WHATSAPP API ENDPOINTS
 app.use('/welcome', welcomeRouter);
