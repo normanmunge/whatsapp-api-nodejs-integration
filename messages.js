@@ -114,7 +114,9 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
         sendMessage(wekeza_reply)
           .then((response) => {
             console.log('THE WEKEZA WEBHOOK REPLY', response);
-            response.end();
+            if (response.status === 200) {
+              return response.statusText;
+            }
           })
           .catch((err) => {
             console.log('THE ERROR:', err);
