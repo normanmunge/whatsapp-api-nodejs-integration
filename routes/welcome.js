@@ -25,6 +25,8 @@ router.post('/', (req, res, next) => {
       const user_reply_phone_number = contacts[0].wa_id;
       const message_id = messages[0].id;
 
+      req.user_phone = user_reply_phone_number;
+
       getMessageId(message_id, user_reply_phone_number, 'business');
       res.sendStatus(201);
       return;
