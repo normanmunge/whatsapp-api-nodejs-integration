@@ -50,7 +50,7 @@ app.post('/responses', async (req, res) => {
     return res.sendStatus(401); //unauthorized
   }
 
-  res.sendStatus(200);
+  res.sendStatus(201);
   console.log('THE REQUEST NOW', req.body);
   return;
 });
@@ -186,7 +186,7 @@ try {
         }
       }
 
-      return res.sendStatus(200);
+      return res.sendStatus(201);
       // }
     } else {
       return res.sendStatus(500);
@@ -223,11 +223,9 @@ app.post('join-wekeza-list', async (req, res) => {
       email: email,
       phone: phone,
     });
-    res
-      .status(200)
-      .send({
-        data: `Happy to have you onboard! Our support team will reach out to you in the next few days.`,
-      });
+    res.status(201).json({
+      data: `Happy to have you onboard! Our support team will reach out to you in the next few days.`,
+    });
   } catch (error) {}
 });
 

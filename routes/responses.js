@@ -13,7 +13,7 @@ router.post('/responses', (req, res) => {
     return res.sendStatus(401); //unauthorized
   }
 
-  res.sendStatus(200);
+  res.sendStatus(201);
   console.log('THE REQUEST NOW', req.body);
   return;
 });

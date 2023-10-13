@@ -26,7 +26,7 @@ router.post('/', (req, res, next) => {
       const message_id = messages[0].id;
 
       getMessageId(message_id, user_reply_phone_number, 'business');
-      res.sendStatus(200);
+      res.sendStatus(201);
       return;
     })
     .catch((err) => {
