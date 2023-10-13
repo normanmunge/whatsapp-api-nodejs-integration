@@ -59,9 +59,16 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
     const details = await getMemberDetails(user_reply_phone_number);
 
     if (details) {
-      const { member, chama, total_chama_contributions } = details;
+      const {
+        member,
+        chama,
+        total_chama_contributions,
+        ind_total_chama_contributions,
+        next_recipient_member,
+      } = details;
       const { name } = member;
 
+      //Sets up the next chama cycle date: TODO:-> Set to a different function for simplicity
       const date = new Date();
       const months_of_the_year = [
         'January',
@@ -101,7 +108,7 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
           ? 'th'
           : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
 
-      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES 30000 \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is James Muriithi (0726333555). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
+      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
 
       const wekeza_reply = {
         messaging_product: 'whatsapp',
