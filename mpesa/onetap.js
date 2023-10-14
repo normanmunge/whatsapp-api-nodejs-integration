@@ -10,7 +10,7 @@ const { message_ids } = require('../messages');
 
 router.use(body_parser.json());
 
-const BANKWAVE_BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
+const BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
 const MPESA_BASIC_AUTH = process.env.MPESA_DEV_BASIC_AUTH;
 
 let header_options = {
@@ -27,7 +27,7 @@ const generateAccessToken = async (req, res, next) => {
     };
 
     await needle.post(
-      `${BANKWAVE_BANKWAVE_API_BASE_URL}access-token/`,
+      `${BANKWAVE_API_BASE_URL}access-token/`,
       JSON.stringify(auth),
       header_options,
       (err, resp) => {
@@ -45,6 +45,16 @@ const generateAccessToken = async (req, res, next) => {
   } catch (error) {
     console.log('THE ERROR', error);
   }
+};
+
+const getChamaAccountNumber = async () => {
+  const { phone } = message_ids[0];
+  const member = await getMember(phone);
+  const chama_member_snapshot = Chama.doc(member['chama']);
+  const chama_doc = await chama_member_snapshot.get();
+  //const { onetap_account_no } = chama_doc.data();
+  console.log('THE CHAMA DOC', chama_doc.data());
+  return chama_doc.data();
 };
 
 router.get('/access_token/', generateAccessToken, async (req, res) => {
@@ -68,7 +78,7 @@ router.post('/create-chama-account/', generateAccessToken, async (req, res) => {
         account_name: member['name'],
       };
       await needle.post(
-        `${BANKWAVE_BANKWAVE_API_BASE_URL}account/`,
+        `${BANKWAVE_API_BASE_URL}account/`,
         data,
         header_options,
         async (err, resp) => {
@@ -103,12 +113,7 @@ router.get(
   generateAccessToken,
   async (req, res) => {
     try {
-      const { phone } = message_ids[0];
-      const member = await getMember(phone);
-      const chama_member_snapshot = Chama.doc(member['chama']);
-      const chama_doc = await chama_member_snapshot.get();
-      const { onetap_account_no } = chama_doc.data();
-
+      const { onetap_account_no } = getChamaAccountNumber();
       console.log(
         'THE ACCOUNT NUMBER',
         onetap_account_no,
@@ -117,7 +122,7 @@ router.get(
       );
 
       await needle.get(
-        `${BANKWAVE_BANKWAVE_API_BASE_URL}account/${onetap_account_no}/`,
+        `${BANKWAVE_API_BASE_URL}account/${onetap_account_no}/`,
         header_options,
         (err, resp) => {
           console.log('RESPONSE', resp.body);
@@ -135,6 +140,134 @@ router.get(
     }
   }
 );
+
+router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
+  try {
+    const { onetap_account_no, contribution_amount } =
+      await getChamaAccountNumber();
+
+    const { phone } = message_ids[0];
+    const data = {
+      callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
+      account: onetap_account_no,
+      amount: contribution_amount,
+      phone_number: phone,
+    };
+
+    await needle.post(
+      `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
+      data,
+      header_options,
+      (err, resp) => {
+        if (resp) {
+          //todo: save the stk credit transactions to our DB
+          // {
+          //     "data": {
+          //         "id": "eecae2d9-b0a9-4675-a3b5-599356c9f9f1",
+          //         "account": {
+          //             "account_name": "Norman Munge",
+          //             "account_number": "534953"
+          //         },
+          //         "amount": 10,
+          //         "transaction_type": "stk-push",
+          //         "transaction_category": "credit",
+          //         "transaction_status": "in_progress",
+          //         "callback_url": "https://gentle-glowworm-sharing.ngrok-free.app/stk-push/callback/",
+          //         "phone_number": "254712658102",
+          //         "created_at": "2023-10-14T07:29:40.629820Z",
+          //         "updated_at": "2023-10-14T07:29:40.629855Z"
+          //     }
+          // }
+          res.status(200).json({ data: resp.body });
+        } else {
+          res.status(400).json({ error: err });
+          return;
+        }
+      }
+    );
+  } catch (error) {
+    res.status(400).json({ error: error });
+  }
+});
+
+router.post('/check-transaction-status', async (req, res) => {
+  try {
+    //retrieve from DB
+    const transaction_id = 'eecae2d9-b0a9-4675-a3b5-599356c9f9f1';
+
+    await needle.get(
+      `${BANKWAVE_API_BASE_URL}transaction/${transaction_id}/`,
+      header_options,
+      (err, res) => {
+        if (res) {
+          console.log('the response of transaction status ', res.body);
+        } else {
+        }
+      }
+    );
+  } catch (error) {}
+});
+
+router.post('/stk-push/callback/', async (req, res) => {
+  try {
+    console.log('THE CALLBACK URL', req.body);
+    //todo: update the chama member reports
+    res.status(200).json({ data: resp.body });
+  } catch (error) {}
+});
+
+router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
+  const { onetap_account_no, contribution_amount, recipient_number } =
+    await getChamaAccountNumber();
+
+  const data = {
+    callback_url: `https://${process.env.NGROK_DOMAIN}/send-money/callback/`,
+    account: onetap_account_no,
+    amount: contribution_amount,
+    receiver_phone_number: recipient_number,
+  };
+  await needle.post(
+    `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
+    data,
+    header_options,
+    (err, resp) => {
+      if (resp) {
+        console.log('the response to send money', resp.body);
+        //todo: change recipient number after cycle count complete or when admin triggers
+        //todo: save the stk debit transfer transactions to our DB
+        //           {
+        // 	"data": {
+        // 		"id": "079545da-d6a9-4d0b-ac51-05b835eaf8b7",
+        // 		"account": {
+        // 			"account_name": "Norman Munge",
+        // 			"account_number": "534953"
+        // 		},
+        // 		"amount": 10,
+        // 		"transaction_type": "send-to-phone-number",
+        // 		"transaction_category": "debit",
+        // 		"transaction_status": "in_progress",
+        // 		"callback_url": "https://gentle-glowworm-sharing.ngrok-free.app/send-money/callback/",
+        // 		"receiver_phone_number": "254712658102",
+        // 		"created_at": "2023-10-14T07:48:22.958671Z",
+        // 		"updated_at": "2023-10-14T07:48:22.958711Z"
+        // 	}
+        // }
+        res.status(200).json({ data: resp.body });
+      } else {
+        console.log('the error', err);
+        res.status(400).json({ error: err });
+      }
+    }
+  );
+});
+
+router.post('/send-money/callback/', async (req, res) => {
+  try {
+    console.log('THE CALLBACK URL', req.body);
+    //todo: update the chama member reports
+    res.status(200).json({ data: resp.body });
+  } catch (error) {}
+});
 
 router.post('/send-to-paybill/', generateAccessToken, async (req, res) => {
   //should send to
