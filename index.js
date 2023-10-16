@@ -195,7 +195,7 @@ try {
               /**
                * Check next recipient
                * Send Confirm phone number of next recipient
-               * If yes, prompt STK push
+               * If send, prompt STK push
                * If no, give options and let user choose
                */
               await replyMessage(
@@ -215,15 +215,12 @@ try {
               from: '254712658102',
               id: 'wamid.HBgMMjU0NzEyNjU4MTAyFQIAEhgUM0E3QjlDQzRGMTlCQ0I5MEVDNzgA',
               timestamp: '1697425297',
-              text: { body: 'yes' },
+              text: { body: 'send' },
               type: 'text'
             }
              */
-            if (
-              message.text.body === 'yes' ||
-              message.text.body === 'Yes' ||
-              message.text.body === 'YES'
-            ) {
+            const message = message.text.body.toLowerCase();
+            if (message === 'send') {
               await replyMessage(
                 message_types['send_confirm_contrib'],
                 user_reply_initiated,

@@ -8,7 +8,7 @@ const { triggerStkPush } = require('./mpesa/methods');
 message_types = {
   chama_profile: 'Your Chama Profile' || 'View Chama Profile',
   send_contrib: 'Send Contribution' || 'Send Contributions',
-  send_confirm_contrib: 'Yes' || 'yes' || 'YES',
+  send_confirm_contrib: 'send',
   stop_promotions: 'Stop promotions',
 };
 
@@ -143,7 +143,7 @@ const replyMessage = async (
           user_reply_phone_number
         );
       } else if (type.includes('Contribution')) {
-        const confirm_next_recipient_reply = `Type *_yes*_ if next recipient is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}).`;
+        const confirm_next_recipient_reply = `Type *_send*_ if next recipient is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}).`;
         wekeza_reply = await setChatReply(
           confirm_next_recipient_reply,
           user_reply_phone_number
