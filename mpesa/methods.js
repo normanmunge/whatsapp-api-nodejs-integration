@@ -1,5 +1,11 @@
 const { Collections } = require('../firebase/Transactions');
 const needle = require('needle');
+const BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
+let header_options = {
+  headers: {
+    'Content-Type': 'application/json',
+  },
+};
 
 const triggerStkPush = async (chama, phone) => {
   const { onetap_account_no, contribution_amount } = chama;
@@ -47,13 +53,13 @@ const triggerStkPush = async (chama, phone) => {
           };
           await transactionRef.set(response);
         }
-        return res.status(200).json({ data: resp.body });
+        res.status(200).json({ data: resp.body });
       } else {
         res.status(400).json({ error: err });
-        return;
       }
+      next();
     }
   );
 };
 
-module.exports = { triggerStkPush };
+module.exports = { triggerStkPush, header_options };

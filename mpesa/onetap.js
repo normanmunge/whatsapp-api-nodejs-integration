@@ -6,17 +6,22 @@ const needle = require('needle');
 
 const { Chama } = require('../firebase/Chama');
 const { getMember } = require('../firebase/User');
-const { message_ids } = require('../messages');
+const { message_ids, sendMessage, setChatReply } = require('../messages');
+const { triggerStkPush, header_options } = require('./methods');
 
 router.use(body_parser.json());
 
 const BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
 const MPESA_BASIC_AUTH = process.env.MPESA_DEV_BASIC_AUTH;
 
-let header_options = {
-  headers: {
-    'Content-Type': 'application/json',
-  },
+const getChamaAccountNumber = async () => {
+  const { phone } = message_ids[0];
+  const member = await getMember(phone);
+  const chama_member_snapshot = Chama.doc(member['chama']);
+  const chama_doc = await chama_member_snapshot.get();
+  //const { onetap_account_no } = chama_doc.data();
+  console.log('THE CHAMA DOC', chama_doc.data());
+  return chama_doc.data();
 };
 
 const generateAccessToken = async (req, res, next) => {
@@ -31,6 +36,7 @@ const generateAccessToken = async (req, res, next) => {
       JSON.stringify(auth),
       header_options,
       (err, resp) => {
+        console.log('THE RESP', resp);
         const { access_token, expires_in } = resp['body'];
         console.log('THE ACCESS TOKEN', access_token);
         if (resp && resp.body.access_token) {
@@ -45,16 +51,6 @@ const generateAccessToken = async (req, res, next) => {
   } catch (error) {
     console.log('THE ERROR', error);
   }
-};
-
-const getChamaAccountNumber = async () => {
-  const { phone } = message_ids[0];
-  const member = await getMember(phone);
-  const chama_member_snapshot = Chama.doc(member['chama']);
-  const chama_doc = await chama_member_snapshot.get();
-  //const { onetap_account_no } = chama_doc.data();
-  console.log('THE CHAMA DOC', chama_doc.data());
-  return chama_doc.data();
 };
 
 router.get('/access_token/', generateAccessToken, async (req, res) => {
@@ -144,64 +140,65 @@ router.get(
 router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
   try {
     let chama,
-      phpne = null;
+      phone = null;
 
     if (req.body) {
       chama = req.body.chama || (await getChamaAccountNumber());
       phone = req.body.phone || message_ids[0].phone;
     }
     if (chama && phone) {
-      const { onetap_account_no, contribution_amount } = chama;
-      const data = {
-        callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
-        account: onetap_account_no,
-        amount: contribution_amount,
-        phone_number: phone,
-      };
+      await triggerStkPush(chama, phone);
+      // const { onetap_account_no, contribution_amount } = chama;
+      // const data = {
+      //   callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
+      //   account: onetap_account_no,
+      //   amount: contribution_amount,
+      //   phone_number: phone,
+      // };
 
-      await needle.post(
-        `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
-        data,
-        header_options,
-        async (err, resp) => {
-          if (resp) {
-            const { data } = resp;
-            const {
-              id,
-              account,
-              amount,
-              transaction_type,
-              transaction_category,
-              transaction_status,
-              callback_url,
-              phone_number,
-              created_at,
-              updated_at,
-            } = data;
-            if (data) {
-              const transactionRef = Collections.doc();
+      // await needle.post(
+      //   `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
+      //   data,
+      //   header_options,
+      //   async (err, resp) => {
+      //     if (resp) {
+      //       const { data } = resp;
+      //       const {
+      //         id,
+      //         account,
+      //         amount,
+      //         transaction_type,
+      //         transaction_category,
+      //         transaction_status,
+      //         callback_url,
+      //         phone_number,
+      //         created_at,
+      //         updated_at,
+      //       } = data;
+      //       if (data) {
+      //         const transactionRef = Collections.doc();
 
-              let response = {
-                id: id,
-                amount: amount,
-                chama_account: account['account_number'],
-                phone_number: phone_number,
-                transaction_category: transaction_category,
-                transaction_status: transaction_status,
-                transaction_type: transaction_type,
-                created_at: created_at,
-                updated_at: updated_at,
-                callback_url: callback_url,
-              };
-              await transactionRef.set(response);
-            }
-            return res.status(200).json({ data: resp.body });
-          } else {
-            res.status(400).json({ error: err });
-            return;
-          }
-        }
-      );
+      //         let response = {
+      //           id: id,
+      //           amount: amount,
+      //           chama_account: account['account_number'],
+      //           phone_number: phone_number,
+      //           transaction_category: transaction_category,
+      //           transaction_status: transaction_status,
+      //           transaction_type: transaction_type,
+      //           created_at: created_at,
+      //           updated_at: updated_at,
+      //           callback_url: callback_url,
+      //         };
+      //         await transactionRef.set(response);
+      //       }
+      //       return res.status(200).json({ data: resp.body });
+      //     } else {
+      //       res.status(400).json({ error: err });
+      //       return;
+      //     }
+      //   }
+      // );
     }
 
     // const { onetap_account_no, contribution_amount } =
@@ -271,9 +268,47 @@ router.post('/check-transaction-status', async (req, res) => {
 
 router.post('/stk-push/callback/', async (req, res) => {
   try {
-    console.log('THE CALLBACK URL', req.body);
+    console.log('THE CALLBACK BANKWAVE URL', req.body);
     //todo: update the chama member reports
-    res.status(200).json({ data: resp.body });
+    if (req.body.transaction_status === 'completed') {
+      const mpesa_confirmation = `Cash sent successfully!`;
+      console.log('GETS HERE TO SEND CONFIRMATION REPORT');
+      const chat_reply = setChatReply(
+        mpesa_confirmation,
+        req.body.phone_number
+      );
+      console.log('GETS HERE TO SEND CONFIRMATION REPORT', chat_reply);
+      await sendMessage(chat_reply)
+        .then((response) => {
+          console.log('THE BANKWAVE WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            // return res.status(200).json({ data: resp.body });
+            console.log('AUTOMATE THE SENDING TO RECIPIENT NOW');
+            return;
+          }
+        })
+        .catch((err) => {
+          console.log('THE ERROR:', err);
+        });
+    } else {
+      const mpesa_confirmation =
+        'Failed! Kindly contact the Wekeza Administrator';
+      const chat_reply = setChatReply(
+        mpesa_confirmation,
+        req.body.phone_number
+      );
+
+      await sendMessage(chat_reply)
+        .then((response) => {
+          //console.log('THE WEKEZA WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            return res.status(200).json({ data: resp.body });
+          }
+        })
+        .catch((err) => {
+          console.log('THE ERROR:', err);
+        });
+    }
   } catch (error) {}
 });
 

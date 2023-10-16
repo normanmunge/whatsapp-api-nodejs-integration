@@ -87,8 +87,8 @@ try {
       //business details
       const { value } = changes[0];
 
-      const display_phone_number = value.metadata.display_phone_number;
-      const phone_number_id = value.metadata.phone_number_id;
+      //const display_phone_number = value.metadata.display_phone_number;
+      //const phone_number_id = value.metadata.phone_number_id;
 
       // console.log(
       //   'THE BUSINESS DETAILS: DISPLAY PHONE NUMBER',
@@ -175,40 +175,54 @@ try {
       }
 
       if (user_reply_initiated && typeof value['messages'] !== 'undefined') {
-        const message = value.messages[0];
+        const message = await value.messages[0];
         const message_type = message.type;
         const message_from = message.from; //user phone number;
 
         //TODO: Store the logs for the customer journey i.e their most frequently selected option.
-        console.log('THE MESSAGE TYPE NOW', message_type);
+        // console.log('THE MESSAGE IS:', message.button.payload);
+        if (typeof message === 'object') {
+          console.log('mss', message);
 
-        switch (message_type) {
-          case 'button':
-            if (message.button.payload === 'Your Chama Profile') {
-              await replyMessage(
-                message_types['chama_profile'],
-                user_reply_initiated,
-                message_from
-              );
-            } else if (message.button.payload === 'Send Contribution') {
-              console.log('HANDLE SEND CONTRIBUTION LOGIC');
-              /**
-               * Check next recipient
-               * Send Confirm phone number of next recipient
-               * If send, prompt STK push
-               * If no, give options and let user choose
-               */
-              await replyMessage(
-                message_types['send_contrib'],
-                user_reply_initiated,
-                message_from
-              );
-            } else if (message.button.payload === 'Stop promotions') {
-              console.log('STOP THE PROMOTIONS MESSAGES');
-            }
-            break;
-          case 'text':
-            console.log('THE MESSAGE IS:', message);
+          switch (message_type) {
+            case 'button':
+              const message_button_payload = await message.button.payload;
+              switch (message_button_payload) {
+                case 'Your Chama Profile':
+                  await replyMessage(
+                    message_types['chama_profile'],
+                    user_reply_initiated,
+                    message_from
+                  );
+                  break;
+                case 'Send Contribution':
+                  /**
+                   * Check next recipient
+                   * Send Confirm phone number of next recipient
+                   * If send, prompt STK push
+                   * If no, give options and let user choose
+                   */
+                  await replyMessage(
+                    message_types['send_contrib'],
+                    user_reply_initiated,
+                    message_from
+                  );
+                  break;
+                case 'Stop promotions':
+                  console.log('STOP THE PROMOTIONS MESSAGES');
+                  break;
+                case 'Send':
+                  await replyMessage(
+                    message_types['send_confirm_contrib'],
+                    user_reply_initiated,
+                    message_from
+                  );
+                  break;
+                default:
+                  break;
+              }
+              break;
+            case 'text':
             //TODO: Store message detail logs:
             /**
              * {
@@ -219,16 +233,26 @@ try {
               type: 'text'
             }
              */
-            const message = message.text.body.toLowerCase();
-            if (message === 'send') {
-              await replyMessage(
-                message_types['send_confirm_contrib'],
-                user_reply_initiated,
-                message_from
-              );
-            }
-          default:
-            break;
+            // const msg = await message.text.body;
+            // if (msg.toLowerCase() === 'send') {
+            //   await replyMessage(
+            //     message_types['send_confirm_contrib'],
+            //     user_reply_initiated,
+            //     message_from
+            //   );
+            // }
+
+            // if (msg === 'Send Contribution') {
+            //   const endpoint = app;
+            //   await replyMessage(
+            //     message_types['send_contrib'],
+            //     user_reply_initiated,
+            //     message_from
+            //   );
+            // }
+            default:
+              break;
+          }
         }
       }
 
