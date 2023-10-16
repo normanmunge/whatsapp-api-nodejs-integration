@@ -2,6 +2,15 @@ const axios = require('axios');
 require('dotenv').config;
 
 const { User, getMemberDetails } = require('./firebase/User');
+const bankwaveRouter = require('./mpesa/onetap');
+const { triggerStkPush } = require('./mpesa/methods');
+
+message_types = {
+  chama_profile: 'Your Chama Profile' || 'View Chama Profile',
+  send_contrib: 'Send Contribution' || 'Send Contributions',
+  send_confirm_contrib: 'Yes' || 'yes' || 'YES',
+  stop_promotions: 'Stop promotions',
+};
 
 const sendMessage = (data) => {
   const config = {
@@ -38,7 +47,60 @@ const getWekezaWelcomeMessage = (recipient, text) => {
   });
 };
 
-const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
+const dateLogic = (chama) => {
+  const date = new Date();
+  const months_of_the_year = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  const chama_cycle_next_month = months_of_the_year[date.getMonth() + 1];
+
+  const current_year = date.getFullYear();
+
+  const { deadline_date } = chama;
+
+  const date_suffix =
+    (deadline_date >= 4 && deadline_date <= 20) ||
+    (deadline_date >= 24 && deadline_date <= 30)
+      ? 'th'
+      : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
+
+  return {
+    chama_cycle_next_date: `${chama_cycle_next_month} ${current_year}`,
+    deadline_date: `${deadline_date}${date_suffix}`,
+  };
+};
+
+const setChatReply = (reply, user_reply_phone_number) => {
+  const chatreply = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: user_reply_phone_number,
+    type: 'text',
+    text: {
+      preview_url: false,
+      body: reply,
+    },
+  };
+  return chatreply;
+};
+
+const replyMessage = async (
+  type,
+  user_reply_initiated,
+  user_reply_phone_number
+) => {
   console.log('THE USER REPLY INITIATED', user_reply_initiated);
 
   if (
@@ -68,47 +130,42 @@ const replyMessage = async (user_reply_initiated, user_reply_phone_number) => {
       } = details;
       const { name } = member;
 
-      //Sets up the next chama cycle date: TODO:-> Set to a different function for simplicity
-      const date = new Date();
-      const months_of_the_year = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',
-      ];
+      const { contribution_amount } = chama;
 
-      const chama_cycle_next_month = months_of_the_year[date.getMonth() + 1];
+      let wekeza_reply = null;
 
-      const current_year = date.getFullYear();
-
-      const { contribution_amount, deadline_date } = chama;
-
-      const date_suffix =
-        (deadline_date >= 4 && deadline_date <= 20) ||
-        (deadline_date >= 24 && deadline_date <= 30)
-          ? 'th'
-          : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
-
-      const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date}${date_suffix} of ${chama_cycle_next_month} ${current_year}. \n\n`;
-
-      const wekeza_reply = {
-        messaging_product: 'whatsapp',
-        recipient_type: 'individual',
-        to: user_reply_phone_number,
-        type: 'text',
-        text: {
-          preview_url: false,
-          body: contribution_reply,
-        },
-      };
+      if (type.includes('Chama Profile')) {
+        //Sets up the next chama cycle date:
+        const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
+        const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date} of ${chama_cycle_next_date}. \n\n`;
+        wekeza_reply = await setChatReply(
+          contribution_reply,
+          user_reply_phone_number
+        );
+      } else if (type.includes('Contribution')) {
+        const confirm_next_recipient_reply = `Type *_yes*_ if next recipient is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}).`;
+        wekeza_reply = await setChatReply(
+          confirm_next_recipient_reply,
+          user_reply_phone_number
+        );
+      } else if (type === message_types?.send_confirm_contrib) {
+        // const stk = await triggerStkPush(chama, user_reply_phone_number);
+        const stk = await bankwaveRouter
+          .post('/trigger-stk-push/', {
+            chama: chama,
+            phone: user_reply_phone_number,
+          })
+          .then((stk) => {
+            if (stk) {
+              console.log('THE STK', stk);
+              const stk_confirmation = 'Transaction In Progress';
+              wekeza_reply = setChatReply(
+                stk_confirmation,
+                user_reply_phone_number
+              );
+            }
+          });
+      }
 
       if (wekeza_reply) {
         sendMessage(wekeza_reply)
@@ -144,4 +201,5 @@ module.exports = {
   getMessageId: getMessageId,
   replyMessage: replyMessage,
   message_ids,
+  message_types,
 };

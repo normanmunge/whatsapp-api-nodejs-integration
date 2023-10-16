@@ -24,7 +24,12 @@ const mpesaRouter = require('./mpesa/index');
 const bankwaveRouter = require('./mpesa/onetap');
 
 //messages
-const { getMessageId, sendMessage, replyMessage } = require('./messages');
+const {
+  getMessageId,
+  sendMessage,
+  replyMessage,
+  message_types,
+} = require('./messages');
 
 app.get('/test', (req, res) => {
   console.log('THE PROCESS ENV', process.env.RECIPIENT_WAID);
@@ -175,16 +180,56 @@ try {
         const message_from = message.from; //user phone number;
 
         //TODO: Store the logs for the customer journey i.e their most frequently selected option.
+        console.log('THE MESSAGE TYPE NOW', message_type);
 
         switch (message_type) {
           case 'button':
             if (message.button.payload === 'Your Chama Profile') {
-              await replyMessage(user_reply_initiated, message_from);
+              await replyMessage(
+                message_types['chama_profile'],
+                user_reply_initiated,
+                message_from
+              );
             } else if (message.button.payload === 'Send Contribution') {
               console.log('HANDLE SEND CONTRIBUTION LOGIC');
+              /**
+               * Check next recipient
+               * Send Confirm phone number of next recipient
+               * If yes, prompt STK push
+               * If no, give options and let user choose
+               */
+              await replyMessage(
+                message_types['send_contrib'],
+                user_reply_initiated,
+                message_from
+              );
+            } else if (message.button.payload === 'Stop promotions') {
+              console.log('STOP THE PROMOTIONS MESSAGES');
             }
             break;
-
+          case 'text':
+            console.log('THE MESSAGE IS:', message);
+            //TODO: Store message detail logs:
+            /**
+             * {
+              from: '254712658102',
+              id: 'wamid.HBgMMjU0NzEyNjU4MTAyFQIAEhgUM0E3QjlDQzRGMTlCQ0I5MEVDNzgA',
+              timestamp: '1697425297',
+              text: { body: 'yes' },
+              type: 'text'
+            }
+             */
+            if (
+              message.text.body === 'yes' ||
+              message.text.body === 'Yes' ||
+              message.text.body === 'YES'
+            ) {
+              await replyMessage(
+                message_types['send_confirm_contrib'],
+                user_reply_initiated,
+                message_from
+              );
+            }
           default:
             break;
         }
