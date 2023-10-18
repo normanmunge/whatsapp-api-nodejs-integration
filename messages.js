@@ -188,24 +188,39 @@ const replyMessage = async (
         const transactionsRef = await Collections.where(
           'chama_account',
           '==',
-          chama
+          chama['onetap_account_no']
         ).get();
 
         let paid_member_list_reply = '';
 
-        if (transactionRef.size > 0) {
-          let paid_members = null;
+        if (transactionsRef.size > 0) {
+          let paid_members;
 
-          transactionsRef.map((doc) => {
+          const list = [];
+          members_list.forEach((doc) => {
+            list.push(doc.data());
+          });
+
+          console.log('THE LIST', list);
+
+          transactionsRef.forEach((doc) => {
             const phone = doc.data().phone_number;
-            paid_members = members_list.filter((i) => i.phone_number == phone);
+            console.log('THE MEMBERS HERE', phone);
+
+            paid_members = list.filter((i) => {
+              return i.phone_number == phone;
+            });
           });
 
           paid_members.forEach((i, ind) => {
-            paid_member_list_reply += `${ind + 1}. ${i.name} ✅ \n`;
+            paid_member_list_reply += `${ind + 1}. ${i.name} - ${
+              i.phone
+            } ✅ \n`;
           });
 
-          contribution_reply += `${contribution_reply} \n\n ${paid_member_list_reply}`;
+          console.log('THE PAID MEMBER LIST', paid_member_list_reply);
+
+          contribution_reply += `${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
         }
 
         wekeza_reply = await setChatReply(
