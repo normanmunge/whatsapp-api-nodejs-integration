@@ -102,7 +102,21 @@ const dateLogic = (chama) => {
 
   const current_year = date.getFullYear();
 
-  const { deadline_date } = chama;
+  const { deadline_date, frequency_contribution } = chama;
+
+  let next_month;
+
+  //the frequency contains a digit so it's after n days
+  if (/\d/.test(frequency_contribution)) {
+    const pattern = /\d+/g;
+    const dayFrequency = parseInt(frequency_contribution.match(pattern)[0]);
+
+    deadline_date = `${deadline_date + dayFrequency}`;
+    next_month = `${months_of_the_year[date.getMonth()]} ${current_year}`;
+  } else {
+    //monthly;
+    next_month = `${chama_cycle_next_month} ${current_year}`;
+  }
 
   const date_suffix =
     (deadline_date >= 4 && deadline_date <= 20) ||
@@ -111,7 +125,7 @@ const dateLogic = (chama) => {
       : ['st', 'nd', 'rd'][(deadline_date % 10) - 1];
 
   return {
-    chama_cycle_next_date: `${chama_cycle_next_month} ${current_year}`,
+    chama_cycle_next_date: next_month,
     deadline_date: `${deadline_date}${date_suffix}`,
   };
 };
