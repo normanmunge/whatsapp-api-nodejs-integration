@@ -8,6 +8,7 @@ const { User, getMemberDetails } = require('./firebase/User');
 const { Joinlist } = require('./firebase/JoinList');
 const bankwaveRouter = require('./mpesa/onetap');
 const { triggerStkPush, generateAccessToken } = require('./mpesa/methods');
+const { Collections } = require('./firebase/Transactions');
 
 message_types = {
   chama_profile: 'Your Chama Profile' || 'View Chama Profile',
@@ -175,14 +176,38 @@ const replyMessage = async (
       } = details;
       const { name } = member;
 
-      const { contribution_amount } = chama;
+      const { contribution_amount, members_list } = chama;
 
       console.log('WHAT DOES THE TYPE INLCUDE', type);
 
       if (type.includes('Chama Profile')) {
         //Sets up the next chama cycle date:
         const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
-        const contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date} of ${chama_cycle_next_date}. \n\n`;
+        let contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date} of ${chama_cycle_next_date}. \n\n`;
+
+        const transactionsRef = await Collections.where(
+          'chama_account',
+          '==',
+          chama
+        ).get();
+
+        let paid_member_list_reply = '';
+
+        if (transactionRef.size > 0) {
+          let paid_members = null;
+
+          transactionsRef.map((doc) => {
+            const phone = doc.data().phone_number;
+            paid_members = members_list.filter((i) => i.phone_number == phone);
+          });
+
+          paid_members.forEach((i, ind) => {
+            paid_member_list_reply += `${ind + 1}. ${i.name} ✅ \n`;
+          });
+
+          contribution_reply += `${contribution_reply} \n\n ${paid_member_list_reply}`;
+        }
+
         wekeza_reply = await setChatReply(
           contribution_reply,
           user_reply_phone_number

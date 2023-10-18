@@ -101,6 +101,7 @@ const getMemberDetails = async (phone_no) => {
       );
 
       const total_chama_members = await User.where('chama', '==', chama).get();
+      chama_profile['members_list'] = total_chama_members;
 
       //reset the cyclec count if it's the last member
       let next_recipient_cycle =
