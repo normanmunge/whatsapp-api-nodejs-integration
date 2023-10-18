@@ -4,22 +4,21 @@ const body_parser = require('body-parser');
 const cors = require('cors');
 const app = express().use(body_parser.json());
 const createError = require('http-errors');
-const fs = require('fs');
-const https = require('https');
-const path = require('path');
+// const fs = require('fs');
+// const https = require('https');
+// const path = require('path');
 
 const port = process.env.PORT || 3000;
 const verify_token = process.env.VERIFY_TOKEN;
 app.use(cors());
+
 //firebase
 const { User, getMemberDetails } = require('./firebase/User');
 const { Joinlist } = require('./firebase/JoinList');
 
-// const firebase = require('./firebase/config');
-
 //routes
 const welcomeRouter = require('./routes/welcome');
-const responseRouter = require('./routes/responses');
+// const responseRouter = require('./routes/responses');
 const mpesaRouter = require('./mpesa/index');
 const bankwaveRouter = require('./mpesa/onetap');
 
@@ -43,7 +42,7 @@ app.get('/', (req, res) => {
 });
 
 //mpesa
-app.use('/mpesa', mpesaRouter);
+// app.use('/mpesa', mpesaRouter);
 
 //bankwave
 app.use('/bankwave', bankwaveRouter);
@@ -51,25 +50,23 @@ app.use('/bankwave', bankwaveRouter);
 //WHATSAPP API ENDPOINTS
 app.use('/welcome', welcomeRouter);
 
-app.post('/responses', async (req, res) => {
-  let body = req.body;
-  console.log('THE INCOMING BODY MESSAGE', body);
+// app.post('/responses', async (req, res) => {
+//   let body = req.body;
+//   console.log('THE INCOMING BODY MESSAGE', body);
 
-  if (req.query.token !== verify_token) {
-    return res.sendStatus(401); //unauthorized
-  }
+//   if (req.query.token !== verify_token) {
+//     return res.sendStatus(401); //unauthorized
+//   }
 
-  res.sendStatus(201);
-  console.log('THE REQUEST NOW', req.body);
-  return;
-});
+//   res.sendStatus(201);
+//   console.log('THE REQUEST NOW', req.body);
+//   return;
+// });
 
-let cache_webhook_ids = [];
+let cache_message_ids = [];
 
-try {
-  //let received_message;
-
-  app.post('/webhooks', async (req, res) => {
+app.post('/webhooks', async (req, res) => {
+  try {
     const user_reply = req.body.entry[0];
 
     console.log('THE WEBHOOK reply:', user_reply);
@@ -77,15 +74,10 @@ try {
     if (user_reply) {
       //webhook
       const { id, changes } = user_reply;
-      cache_webhook_ids.unshift(id);
+      // console.log('THE WEBHOOK ID:', id);
 
-      const webhook_id = id;
-
-      // console.log('THE WEBHOOK ID:', webhook_id);
-
-      // if (!cache_webhook_ids.length || webhook_id !== cache_webhook_ids[0]) {
+      // if (!cache_message_ids.length || webhook_id !== cache_message_ids[0]) {
       //business details
-      const { value } = changes[0];
 
       //const display_phone_number = value.metadata.display_phone_number;
       //const phone_number_id = value.metadata.phone_number_id;
@@ -97,7 +89,7 @@ try {
       //   phone_number_id
       // );
       //console.log('THE PHONE NUMBER', value);
-
+      const { value } = changes[0];
       let user_reply_initiated = false;
 
       if (typeof value['contacts'] !== 'undefined' && value.contacts.length) {
@@ -160,12 +152,9 @@ try {
         if (data) {
           await sendMessage(data)
             .then((response) => {
-              console.log('THE RESPONSE WEBHOOK REPLY', response.data);
-              //res.end();
-            })
-            .then(() => {
-              user_reply_initiated = true;
-              // replyMessage(user_reply_initiated);
+              if (response.data?.success) {
+                user_reply_initiated = true;
+              }
             })
             .catch((err) => {
               console.log('THE ERROR:', err);
@@ -184,47 +173,53 @@ try {
         if (typeof message === 'object') {
           console.log('mss', message);
 
-          switch (message_type) {
-            case 'button':
-              const message_button_payload = await message.button.payload;
-              switch (message_button_payload) {
-                case 'Your Chama Profile':
-                  await replyMessage(
-                    message_types['chama_profile'],
-                    user_reply_initiated,
-                    message_from
-                  );
-                  break;
-                case 'Send Contribution':
-                  /**
-                   * Check next recipient
-                   * Send Confirm phone number of next recipient
-                   * If send, prompt STK push
-                   * If no, give options and let user choose
-                   */
-                  await replyMessage(
-                    message_types['send_contrib'],
-                    user_reply_initiated,
-                    message_from
-                  );
-                  break;
-                case 'Stop promotions':
-                  console.log('STOP THE PROMOTIONS MESSAGES');
-                  break;
-                case 'Send':
-                  await replyMessage(
-                    message_types['send_confirm_contrib'],
-                    user_reply_initiated,
-                    message_from
-                  );
-                  break;
-                default:
-                  break;
-              }
-              break;
-            case 'text':
-            //TODO: Store message detail logs:
-            /**
+          console.log('THE CACHED WEBHOOK', cache_message_ids[0]);
+
+          //if the message id is different, then it's a new request
+          if (cache_message_ids[0] !== message.id) {
+            console.log('LOGIC TO SEND TEXT BACK TO USER');
+            switch (message_type) {
+              case 'button':
+                const message_button_payload = await message.button.payload;
+                switch (message_button_payload) {
+                  case 'Your Chama Profile':
+                    await replyMessage(
+                      message_types['chama_profile'],
+                      user_reply_initiated,
+                      message_from
+                    );
+
+                    break;
+                  case 'Send Contribution':
+                    /**
+                     * Check next recipient
+                     * Send Confirm phone number of next recipient
+                     * If send, prompt STK push
+                     * If no, give options and let user choose
+                     */
+                    await replyMessage(
+                      message_types['send_contrib'],
+                      user_reply_initiated,
+                      message_from
+                    );
+                    break;
+                  case 'Stop promotions':
+                    console.log('STOP THE PROMOTIONS MESSAGES');
+                    break;
+                  case 'Send':
+                    await replyMessage(
+                      message_types['send_confirm_contrib'],
+                      user_reply_initiated,
+                      message_from
+                    );
+                    break;
+                  default:
+                    break;
+                }
+                break;
+              case 'text':
+              //TODO: Store message detail logs:
+              /**
              * {
               from: '254712658102',
               id: 'wamid.HBgMMjU0NzEyNjU4MTAyFQIAEhgUM0E3QjlDQzRGMTlCQ0I5MEVDNzgA',
@@ -233,39 +228,38 @@ try {
               type: 'text'
             }
              */
-            // const msg = await message.text.body;
-            // if (msg.toLowerCase() === 'send') {
-            //   await replyMessage(
-            //     message_types['send_confirm_contrib'],
-            //     user_reply_initiated,
-            //     message_from
-            //   );
-            // }
+              // const msg = await message.text.body;
+              // if (msg.toLowerCase() === 'send') {
+              //   await replyMessage(
+              //     message_types['send_confirm_contrib'],
+              //     user_reply_initiated,
+              //     message_from
+              //   );
+              // }
 
-            // if (msg === 'Send Contribution') {
-            //   const endpoint = app;
-            //   await replyMessage(
-            //     message_types['send_contrib'],
-            //     user_reply_initiated,
-            //     message_from
-            //   );
-            // }
-            default:
-              break;
+              // if (msg === 'Send Contribution') {
+              //   const endpoint = app;
+              //   await replyMessage(
+              //     message_types['send_contrib'],
+              //     user_reply_initiated,
+              //     message_from
+              //   );
+              // }
+              default:
+                break;
+            }
+            //let's cache this webhook
+            cache_message_ids.unshift(message.id);
           }
         }
       }
-
-      return res.sendStatus(201);
       // }
-    } else {
-      return res.sendStatus(500);
     }
-  });
-} catch (error) {
-  console.log('THE ERROR', error);
-  return res.sendStatus(500);
-}
+    return res.send(200).end();
+  } catch (error) {
+    return res.send(500).end();
+  }
+});
 
 //FIREBASE ENDPOINTS
 app.post('/create-user', async (req, res) => {
