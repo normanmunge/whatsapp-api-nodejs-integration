@@ -1,4 +1,8 @@
-require('dotenv').config();
+const ENV =
+  typeof process.env.NODE_ENV !== 'undefined'
+    ? `.env.${process.env.NODE_ENV}`
+    : `.env`;
+require('dotenv').config({ path: ENV });
 const express = require('express');
 const body_parser = require('body-parser');
 const cors = require('cors');
@@ -37,7 +41,7 @@ app.get('/test', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Welcome to Wekeza');
+  res.send(`Welcome to Wekeza: Serving with this env: ${process.env.NODE_ENV}`);
   return;
 });
 
@@ -255,9 +259,9 @@ app.post('/webhooks', async (req, res) => {
       }
       // }
     }
-    return res.send(200).end();
+    return res.sendStatus(200);
   } catch (error) {
-    return res.send(500).end();
+    return res.sendStatus(500);
   }
 });
 
