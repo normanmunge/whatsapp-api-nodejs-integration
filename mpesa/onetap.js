@@ -51,6 +51,11 @@ const generateAccessToken = async (req, res, next) => {
   }
 };
 
+router.get('/', (req, res) => {
+  res.send(`Bankwave routers working`);
+  return;
+});
+
 router.get('/access_token/', generateAccessToken, async (req, res) => {
   {
     try {
@@ -64,41 +69,47 @@ router.get('/access_token/', generateAccessToken, async (req, res) => {
 router.post('/create-chama-account/', generateAccessToken, async (req, res) => {
   //todo:: delete account -> 362613 && 625555 && 440026 && 534953
   try {
-    if (message_ids.length) {
-      const { phone } = message_ids[0];
-      const member = await getMember(phone);
+    //if (message_ids.length) {
+    const { phone } = message_ids[0];
+    //const phone = '254768154750';
+    const member = await getMember(phone);
 
-      const data = {
-        account_name: member['name'],
-      };
-      await needle.post(
-        `${BANKWAVE_API_BASE_URL}account/`,
-        data,
-        header_options,
-        async (err, resp) => {
-          if (resp) {
-            if (phone) {
-              const { account_name, account_number, created_at } = resp['body'];
+    const data = {
+      account_name: member['name'],
+      //account_name: 'Girls club helping',
+    };
+    await needle.post(
+      `${BANKWAVE_API_BASE_URL}account/`,
+      data,
+      header_options,
+      async (err, resp) => {
+        if (resp) {
+          if (phone) {
+            const { account_name, account_number, created_at } = resp['body'];
 
-              const chamaRef = Chama.doc(member['chama']);
+            const chamaRef = Chama.doc(member['chama']);
+            //const chamaRef = Chama.doc('Zetd1Tcq7KQeAmSnEWmE');
 
-              const registrationRef = Reports.doc();
-              await registrationRef.set({
-                name: name,
-                email: email,
-                phone: phone,
-              });
+            await chamaRef.update({
+              onetap_account_no: account_number,
+            });
+            // const registrationRef = Reports.doc();
+            // await registrationRef.set({
+            //   name: name,
+            //   email: email,
+            //   phone: phone,
+            // });
 
-              return res.status(201).json(`Successful`);
-            }
-
-            return;
-          } else {
-            return res.status(400).json({ erorr: err });
+            return res.status(201).json(`Successful`);
           }
+
+          return;
+        } else {
+          return res.status(400).json({ erorr: err });
         }
-      );
-    }
+      }
+    );
+    // }
   } catch (error) {
     console.log('THE ERROR', error);
   }
