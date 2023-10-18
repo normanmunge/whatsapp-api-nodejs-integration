@@ -24,6 +24,14 @@ Need to install this to your local computer:
    https: `ngrok http https://localhost:[PORT]`
    inspector: `http://127.0.0.1:4040`
 
+### STARTING SERVER
+
+Based on your branch, there are 3 .dotenv configuration files ie .env, .env-dev, .env-staging for production, local development, testing purposes. This is how to start the server:
+
+Production: npm run start
+Development: npm run start:dev
+Staging: npm run start:staging
+
 ### Other Resources
 
 1. Whatsapp Cloud API [https://developers.facebook.com/apps/853568265946314/whatsapp-business/wa-dev-console/?business_id=240206303911472]
