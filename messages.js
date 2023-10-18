@@ -163,6 +163,8 @@ const replyMessage = async (
 
       let wekeza_reply = null;
 
+      console.log('WHAT DOES THE TYPE INLCUDE', type);
+
       if (type.includes('Chama Profile')) {
         //Sets up the next chama cycle date:
         const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
@@ -178,6 +180,8 @@ const replyMessage = async (
         //   confirm_next_recipient_reply,
         //   user_reply_phone_number
         // );
+        console.log('THE NEXT RECIPIENT IS:', next_recipient_member);
+
         wekeza_reply = await confirmRecipientMessage(
           user_reply_phone_number,
           next_recipient_member
@@ -199,7 +203,7 @@ const replyMessage = async (
 
             const config = {
               method: 'POST',
-              url: `${BANKWAVE_API_BASE_URL}v1/access-token/`,
+              url: `${BANKWAVE_API_BASE_URL}access-token/`,
               headers: header_options,
               data: auth,
             };
@@ -216,7 +220,7 @@ const replyMessage = async (
               });
 
             // await needle.post(
-            //   `${BANKWAVE_API_BASE_URL}v1/access-token/`,
+            //   `${BANKWAVE_API_BASE_URL}access-token/`,
             //   JSON.stringify(auth),
             //   header_options,
             //   (err, resp) => {
@@ -252,14 +256,14 @@ const replyMessage = async (
 
             const config = {
               method: 'POST',
-              url: `${BANKWAVE_API_BASE_URL}v1/transaction/stk-push/`,
+              url: `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
               headers: header_options,
               data: data,
             };
 
             return axios(config)
               .then(async (resp) => {
-                console.log('THE RESPONSE', resp, 'OR ERROR:', err);
+                //console.log('THE RESPONSE', resp, 'OR ERROR:');
                 const { data } = resp.body;
                 const {
                   id,
@@ -294,13 +298,13 @@ const replyMessage = async (
                 //return res.status(200).json({ data: resp.body });
               })
               .catch((err) => {
-                console.log('the errro', err.response, 'AND DATA', err.data);
+                console.log('Errro 2', err);
                 return;
                 //res.status(400).json({ error: err });
               });
 
             // await needle.post(
-            //   `${BANKWAVE_API_BASE_URL}v1/transaction/stk-push/`,
+            //   `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
             //   data,
             //   header_options,
             //   async (err, resp) => {
