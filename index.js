@@ -196,7 +196,6 @@ app.post('/webhooks', async (req, res) => {
         // console.log('THE MESSAGE IS:', message.button.payload);
         if (typeof message === 'object') {
           console.log('mss', message);
-
           //if the message id is different, then it's a new request
           if (cache_message_ids[0] !== message.id) {
             switch (message_type) {
@@ -241,8 +240,24 @@ app.post('/webhooks', async (req, res) => {
                 }
                 break;
               case 'text':
+                const checkIfUserRegistered = await getMemberDetails(
+                  message_from
+                );
+
+                //User isn't registered in our chama.
+                if (!checkIfUserRegistered) {
+                  console.log('User not registered');
+                  await replyMessage(
+                    message_types['register'],
+                    user_reply_initiated,
+                    message_from
+                  );
+                  cache_message_ids.unshift(message.id);
+
+                  return res.end();
+                }
                 const data = getWekezaWelcomeMessage(
-                  process.env.RECIPIENT_WAID,
+                  user_reply_phone_number,
                   'Welcome to Wekeza!'
                 );
                 //todo:// make send welcome message re-usable
@@ -266,6 +281,7 @@ app.post('/webhooks', async (req, res) => {
                     console.log('THE ERROR', err.response['data']);
                     return res.sendStatus(400);
                   });
+
               //TODO: Store message detail logs:
               /**
              * {

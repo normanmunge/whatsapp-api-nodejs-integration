@@ -13,6 +13,7 @@ message_types = {
   send_contrib: 'Send Contribution' || 'Send Contributions',
   send_confirm_contrib: 'send',
   stop_promotions: 'Stop promotions',
+  register: 'Register',
 };
 
 const sendMessage = (data) => {
@@ -148,7 +149,7 @@ const replyMessage = async (
     // 5. Next recipient in the list with the deadline date.
 
     const details = await getMemberDetails(user_reply_phone_number);
-
+    let wekeza_reply = null;
     if (details) {
       const {
         member,
@@ -161,8 +162,6 @@ const replyMessage = async (
 
       const { contribution_amount } = chama;
 
-      let wekeza_reply = null;
-
       console.log('WHAT DOES THE TYPE INLCUDE', type);
 
       if (type.includes('Chama Profile')) {
@@ -174,6 +173,7 @@ const replyMessage = async (
           user_reply_phone_number
         );
       } else if (type.includes('Contribution')) {
+        //TODO: //WHAT IF USER SENDS A TEXT THAT CONTAINS THIS
         console.log('THE NEXT RECIPIENT IS:', next_recipient_member);
 
         wekeza_reply = await confirmRecipientMessage(
@@ -327,22 +327,29 @@ const replyMessage = async (
           }
         });
       }
+    } else {
+      //let's tell the user that we'll contact them.
+      const registration_reply = `Thanks for contacting us. We are yet to be register you in a chama 😔. That might be an issue on our end so our customer support will reach out to you in the next 24hours. You could also contact us directly through the number or by shooting us an email. Our contact details are on our Whatsapp profile. \n\n Thank you.`;
+      wekeza_reply = await setChatReply(
+        registration_reply,
+        user_reply_phone_number
+      );
+    }
 
-      if (wekeza_reply) {
-        return sendMessage(wekeza_reply)
-          .then((response) => {
-            //console.log('THE WEKEZA WEBHOOK REPLY', response);
-            if (response.status === 200) {
-              return response.statusText;
-            }
-          })
-          .catch((err) => {
-            //TODO: Configure error-handling messages
-            const error = err.response['data'];
-            console.log('THE ERROR - SENDING MESSAGE:', error);
-            return;
-          });
-      }
+    if (wekeza_reply) {
+      return sendMessage(wekeza_reply)
+        .then((response) => {
+          //console.log('THE WEKEZA WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            return response.statusText;
+          }
+        })
+        .catch((err) => {
+          //TODO: Configure error-handling messages
+          const error = err.response['data'];
+          console.log('THE ERROR - SENDING MESSAGE:', error);
+          return;
+        });
     }
   }
 };
