@@ -4,7 +4,7 @@ const body_parser = require('body-parser');
 require('dotenv').config();
 const needle = require('needle');
 
-const { Chama } = require('../firebase/Chama');
+const { Chama, Reports, ChamaCycleCount } = require('../firebase/Chama');
 const { getMember } = require('../firebase/User');
 const { message_ids, sendMessage, setChatReply } = require('../messages');
 const { triggerStkPush, header_options } = require('./methods');
@@ -36,9 +36,7 @@ const generateAccessToken = async (req, res, next) => {
       JSON.stringify(auth),
       header_options,
       (err, resp) => {
-        console.log('THE RESP', resp);
         const { access_token, expires_in } = resp['body'];
-        console.log('THE ACCESS TOKEN', access_token);
         if (resp && resp.body.access_token) {
           (header_options.headers['Authorization'] = `Bearer ${access_token}`),
             (req.access_token = access_token);
@@ -84,9 +82,11 @@ router.post('/create-chama-account/', generateAccessToken, async (req, res) => {
 
               const chamaRef = Chama.doc(member['chama']);
 
-              chamaRef.update({
-                onetap_account_no: account_number,
-                updated_at: created_at,
+              const registrationRef = Reports.doc();
+              await registrationRef.set({
+                name: name,
+                email: email,
+                phone: phone,
               });
 
               return res.status(201).json(`Successful`);
@@ -266,50 +266,85 @@ router.post('/check-transaction-status', async (req, res) => {
   } catch (error) {}
 });
 
-router.post('/stk-push/callback/', async (req, res) => {
+router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
   try {
-    console.log('THE CALLBACK BANKWAVE URL', req.body);
+    console.log('THE CALLBACK BANKWAVE URL STK CALLBACK', req.body);
+    const { account, amount } = req.body;
+    const { account_number } = account;
     //todo: update the chama member reports
     if (req.body.transaction_status === 'completed') {
-      const mpesa_confirmation = `Cash sent successfully!`;
-      console.log('GETS HERE TO SEND CONFIRMATION REPORT');
-      const chat_reply = setChatReply(
-        mpesa_confirmation,
-        req.body.phone_number
-      );
-      console.log('GETS HERE TO SEND CONFIRMATION REPORT', chat_reply);
-      await sendMessage(chat_reply)
-        .then((response) => {
-          console.log('THE BANKWAVE WEBHOOK REPLY', response);
-          if (response.status === 200) {
-            // return res.status(200).json({ data: resp.body });
-            console.log('AUTOMATE THE SENDING TO RECIPIENT NOW');
-            return;
+      const member = await getMember(req.body.phone_number);
+      console.log('AUTOMATE THE SENDING TO RECIPIENT NOW 1', member);
+
+      // const { onetap_account_no, contribution_amount, recipient_number } =
+      // await getChamaAccountNumber();
+
+      const data = {
+        callback_url: `${process.env.NGROK_DOMAIN}/send-money/callback/`,
+        account: account_number,
+        amount: amount,
+        receiver_phone_number: member['next_recipient_member']?.phone_number,
+      };
+      await needle.post(
+        `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
+        data,
+        header_options,
+        (err, resp) => {
+          if (resp) {
+            console.log('the response to send money', resp.body);
+            //todo: change recipient number after cycle count complete or when admin triggers
+            //todo: save the stk debit transfer transactions to our DB
+
+            //           {
+            // 	"data": {
+            // 		"id": "079545da-d6a9-4d0b-ac51-05b835eaf8b7",
+            // 		"account": {
+            // 			"account_name": "Norman Munge",
+            // 			"account_number": "534953"
+            // 		},
+            // 		"amount": 10,
+            // 		"transaction_type": "send-to-phone-number",
+            // 		"transaction_category": "debit",
+            // 		"transaction_status": "in_progress",
+            // 		"callback_url": "https://gentle-glowworm-sharing.ngrok-free.app/send-money/callback/",
+            // 		"receiver_phone_number": "254712658102",
+            // 		"created_at": "2023-10-14T07:48:22.958671Z",
+            // 		"updated_at": "2023-10-14T07:48:22.958711Z"
+            // 	}
+            // }
+            // res.status(200).end();
+            res.status(200);
+          } else {
+            console.log('the error', err);
+            res.status(400);
           }
-        })
-        .catch((err) => {
-          console.log('THE ERROR:', err);
-        });
+        }
+      );
     } else {
       const mpesa_confirmation =
         'Failed! Kindly contact the Wekeza Administrator';
-      const chat_reply = setChatReply(
-        mpesa_confirmation,
-        req.body.phone_number
-      );
+      console.log('Failed', mpesa_confirmation);
+      // const chat_reply = setChatReply(
+      //   mpesa_confirmation,
+      //   req.body.phone_number
+      // );
 
-      await sendMessage(chat_reply)
-        .then((response) => {
-          //console.log('THE WEKEZA WEBHOOK REPLY', response);
-          if (response.status === 200) {
-            return res.status(200).json({ data: resp.body });
-          }
-        })
-        .catch((err) => {
-          console.log('THE ERROR:', err);
-        });
+      // await sendMessage(chat_reply)
+      //   .then((response) => {
+      //     //console.log('THE WEKEZA WEBHOOK REPLY', response);
+      //     if (response.status === 200) {
+      //       return res.status(200).json({ data: resp.body });
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.log('THE ERROR:', err);
+      //   });
     }
-  } catch (error) {}
+    return res.end();
+  } catch (error) {
+    console.log('THE STK CALLBACK ERROR:', error);
+    return res.status(400).end();
+  }
 });
 
 router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
@@ -322,6 +357,7 @@ router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
     amount: contribution_amount,
     receiver_phone_number: recipient_number,
   };
+
   await needle.post(
     `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
     data,
@@ -348,10 +384,10 @@ router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
         // 		"updated_at": "2023-10-14T07:48:22.958711Z"
         // 	}
         // }
-        res.status(200).json({ data: resp.body });
+        res.status(200);
       } else {
         console.log('the error', err);
-        res.status(400).json({ error: err });
+        res.status(400);
       }
     }
   );
@@ -359,10 +395,50 @@ router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
 
 router.post('/send-money/callback/', async (req, res) => {
   try {
-    console.log('THE CALLBACK URL', req.body);
+    console.log('THE CALLBACK BANKWAVE URL SEND MONEY', req.body);
+    const { account, amount, created_at, receiver_phone_number } = req.body;
+    const { account_number } = account;
     //todo: update the chama member reports
-    res.status(200).json({ data: resp.body });
-  } catch (error) {}
+    //todo: update the reports of the recipient amount
+    let mpesa_confirmation = 'Cash sent successfully!!';
+
+    if (req.body.transaction_status === 'completed') {
+      console.log('SENT SUCCESSFULLY', mpesa_confirmation);
+      const chat_reply = setChatReply(
+        mpesa_confirmation,
+        req.body.phone_number
+      );
+      console.log('GETS HERE TO SEND CONFIRMATION REPORT', chat_reply);
+      await sendMessage(chat_reply)
+        .then(async (response) => {
+          console.log('THE SEND MESSAGE BANKWAVE WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            const member = await getMember(receiver_phone_number);
+            console.log('SENT THE CASH TO RECIPIENT', member);
+
+            // const reportsRef = Reports.doc();
+
+            // await reportsRef.set({
+            //   amount_received: amount,
+            //   chama: member['chama'],
+            //   date_of_payment: created_at,
+            //   member: member['next_recipient_id'], //recipient,
+            //   member_phone: receiver_phone_number,
+            // });
+            res.status(200).end();
+          } else {
+            mpesa_confirmation = 'Cash not sent!!!';
+            res.status(400).end();
+          }
+        })
+        .catch((error) => {
+          res.status(400).end();
+        });
+    }
+    return res.end();
+  } catch (error) {
+    return res.status(400).json({ error: error }).end();
+  }
 });
 
 router.post('/send-to-paybill/', generateAccessToken, async (req, res) => {
