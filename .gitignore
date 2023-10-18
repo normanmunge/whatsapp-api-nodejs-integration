@@ -2,3 +2,4 @@ node_modules
 .env
 .env-staging
 https-cert
+firebase/wekeza-400900-*
