@@ -56,7 +56,7 @@ const confirmRecipientMessage = (recipient, data) => {
     to: recipient,
     type: 'template',
     template: {
-      name: 'send_contibutions',
+      name: 'send_contributions',
       language: {
         code: 'en_GB',
       },
@@ -174,12 +174,6 @@ const replyMessage = async (
           user_reply_phone_number
         );
       } else if (type.includes('Contribution')) {
-        //const confirm_next_recipient_reply = `Type *_send*_ if next recipient is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}).`;
-
-        // wekeza_reply = await setChatReply(
-        //   confirm_next_recipient_reply,
-        //   user_reply_phone_number
-        // );
         console.log('THE NEXT RECIPIENT IS:', next_recipient_member);
 
         wekeza_reply = await confirmRecipientMessage(
@@ -216,30 +210,13 @@ const replyMessage = async (
                 return access_token;
               })
               .catch((err) => {
-                console.log('THE ERROR', err);
+                console.log(
+                  'THE ERROR: SEND CONTRIBUTION GENERATE ACCESS TOKEN:',
+                  err
+                );
               });
-
-            // await needle.post(
-            //   `${BANKWAVE_API_BASE_URL}access-token/`,
-            //   JSON.stringify(auth),
-            //   header_options,
-            //   (err, resp) => {
-            //     console.log('THE RESP', resp.body, 'AND AUTH', auth);
-            //     const { access_token, expires_in } = resp['body'];
-
-            //     if (resp && resp.body.access_token) {
-            //       header_options.headers[
-            //         'Authorization'
-            //       ] = `Bearer ${access_token}`;
-            //       // (req.access_token = access_token);
-            //       return access_token;
-            //     } else {
-            //       // res.status(404).json({ error: err });
-            //     }
-            //   }
-            // );
           } catch (error) {
-            console.log('THE ERROR', error);
+            console.log('THE ERROR SEND CONTRIBUTION 2', error);
           }
         };
 
@@ -352,7 +329,7 @@ const replyMessage = async (
       }
 
       if (wekeza_reply) {
-        sendMessage(wekeza_reply)
+        return sendMessage(wekeza_reply)
           .then((response) => {
             //console.log('THE WEKEZA WEBHOOK REPLY', response);
             if (response.status === 200) {
@@ -360,7 +337,10 @@ const replyMessage = async (
             }
           })
           .catch((err) => {
-            console.log('THE ERROR:', err);
+            //TODO: Configure error-handling messages
+            const error = err.response['data'];
+            console.log('THE ERROR - SENDING MESSAGE:', error);
+            return;
           });
       }
     }
