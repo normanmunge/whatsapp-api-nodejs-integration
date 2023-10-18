@@ -5,6 +5,7 @@ const router = express.Router();
 const needle = require('needle');
 
 const { User, getMemberDetails } = require('./firebase/User');
+const { Joinlist } = require('./firebase/JoinList');
 const bankwaveRouter = require('./mpesa/onetap');
 const { triggerStkPush, generateAccessToken } = require('./mpesa/methods');
 
@@ -13,6 +14,7 @@ message_types = {
   send_contrib: 'Send Contribution' || 'Send Contributions',
   send_confirm_contrib: 'send',
   stop_promotions: 'Stop promotions',
+  register: 'Register',
 };
 
 const sendMessage = (data) => {
@@ -56,7 +58,7 @@ const confirmRecipientMessage = (recipient, data) => {
     to: recipient,
     type: 'template',
     template: {
-      name: 'send_contibutions',
+      name: 'send_contributions',
       language: {
         code: 'en_GB',
       },
@@ -148,7 +150,7 @@ const replyMessage = async (
     // 5. Next recipient in the list with the deadline date.
 
     const details = await getMemberDetails(user_reply_phone_number);
-
+    let wekeza_reply = null;
     if (details) {
       const {
         member,
@@ -161,8 +163,6 @@ const replyMessage = async (
 
       const { contribution_amount } = chama;
 
-      let wekeza_reply = null;
-
       console.log('WHAT DOES THE TYPE INLCUDE', type);
 
       if (type.includes('Chama Profile')) {
@@ -174,12 +174,7 @@ const replyMessage = async (
           user_reply_phone_number
         );
       } else if (type.includes('Contribution')) {
-        //const confirm_next_recipient_reply = `Type *_send*_ if next recipient is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}).`;
-
-        // wekeza_reply = await setChatReply(
-        //   confirm_next_recipient_reply,
-        //   user_reply_phone_number
-        // );
+        //TODO: //WHAT IF USER SENDS A TEXT THAT CONTAINS THIS
         console.log('THE NEXT RECIPIENT IS:', next_recipient_member);
 
         wekeza_reply = await confirmRecipientMessage(
@@ -216,30 +211,13 @@ const replyMessage = async (
                 return access_token;
               })
               .catch((err) => {
-                console.log('THE ERROR', err);
+                console.log(
+                  'THE ERROR: SEND CONTRIBUTION GENERATE ACCESS TOKEN:',
+                  err
+                );
               });
-
-            // await needle.post(
-            //   `${BANKWAVE_API_BASE_URL}access-token/`,
-            //   JSON.stringify(auth),
-            //   header_options,
-            //   (err, resp) => {
-            //     console.log('THE RESP', resp.body, 'AND AUTH', auth);
-            //     const { access_token, expires_in } = resp['body'];
-
-            //     if (resp && resp.body.access_token) {
-            //       header_options.headers[
-            //         'Authorization'
-            //       ] = `Bearer ${access_token}`;
-            //       // (req.access_token = access_token);
-            //       return access_token;
-            //     } else {
-            //       // res.status(404).json({ error: err });
-            //     }
-            //   }
-            // );
           } catch (error) {
-            console.log('THE ERROR', error);
+            console.log('THE ERROR SEND CONTRIBUTION 2', error);
           }
         };
 
@@ -350,19 +328,37 @@ const replyMessage = async (
           }
         });
       }
+    } else {
+      //let's tell the user that we'll contact them.
+      const registration_reply = `Thanks for contacting us. We are yet to be register you in a chama 😔. That might be an issue on our end so our customer support will reach out to you in the next 24hours. You could also contact us directly through the number or by shooting us an email. Our contact details are on our Whatsapp profile. \n\n Thank you.`;
+      wekeza_reply = await setChatReply(
+        registration_reply,
+        user_reply_phone_number
+      );
 
-      if (wekeza_reply) {
-        sendMessage(wekeza_reply)
-          .then((response) => {
-            //console.log('THE WEKEZA WEBHOOK REPLY', response);
-            if (response.status === 200) {
-              return response.statusText;
-            }
-          })
-          .catch((err) => {
-            console.log('THE ERROR:', err);
-          });
-      }
+      const registrationRef = Joinlist.doc();
+      await registrationRef.set({
+        name: null,
+        email: null,
+        phone: user_reply_phone_number,
+        source: 'whatsapp',
+      });
+    }
+
+    if (wekeza_reply) {
+      return sendMessage(wekeza_reply)
+        .then((response) => {
+          //console.log('THE WEKEZA WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            return response.statusText;
+          }
+        })
+        .catch((err) => {
+          //TODO: Configure error-handling messages
+          const error = err.response['data'];
+          console.log('THE ERROR - SENDING MESSAGE:', error);
+          return;
+        });
     }
   }
 };

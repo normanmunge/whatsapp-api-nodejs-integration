@@ -31,6 +31,7 @@ const {
   getMessageId,
   sendMessage,
   replyMessage,
+  getWekezaWelcomeMessage,
   message_types,
 } = require('./messages');
 
@@ -67,12 +68,35 @@ app.use('/welcome', welcomeRouter);
 //   return;
 // });
 
+//Configure our webhook
+app.get('/webhooks', async (req, res) => {
+  try {
+    if (
+      req.query['hub.mode'] == 'subscribe' &&
+      req.query['hub.verify_token'] == verify_token
+    ) {
+      res.send(req.query['hub.challenge']);
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (err) {
+    console.log('ERROR', err);
+    res.sendStatus(400);
+  }
+});
+
 let cache_message_ids = [];
 
 app.post('/webhooks', async (req, res) => {
   try {
-    const user_reply = req.body.entry[0];
+    //resource: https://business.whatsapp.com/blog/how-to-use-webhooks-from-whatsapp-business-api
 
+    if (req.body.object !== 'whatsapp_business_account') {
+      // not from the whatsapp business webhook so dont process
+      return res.sendStatus(400);
+    }
+
+    const user_reply = req.body.entry[0];
     console.log('THE WEBHOOK reply:', user_reply);
 
     if (user_reply) {
@@ -176,22 +200,20 @@ app.post('/webhooks', async (req, res) => {
         // console.log('THE MESSAGE IS:', message.button.payload);
         if (typeof message === 'object') {
           console.log('mss', message);
-
-          console.log('THE CACHED WEBHOOK', cache_message_ids[0]);
-
           //if the message id is different, then it's a new request
           if (cache_message_ids[0] !== message.id) {
-            console.log('LOGIC TO SEND TEXT BACK TO USER');
             switch (message_type) {
               case 'button':
                 const message_button_payload = await message.button.payload;
                 switch (message_button_payload) {
                   case 'Your Chama Profile':
-                    await replyMessage(
+                    const profile = await replyMessage(
                       message_types['chama_profile'],
                       user_reply_initiated,
                       message_from
                     );
+
+                    console.log('THE PROFILE RESPONSE RETURNED:', profile);
 
                     break;
                   case 'Send Contribution':
@@ -210,7 +232,7 @@ app.post('/webhooks', async (req, res) => {
                   case 'Stop promotions':
                     console.log('STOP THE PROMOTIONS MESSAGES');
                     break;
-                  case 'Send':
+                  case 'Confirm':
                     await replyMessage(
                       message_types['send_confirm_contrib'],
                       user_reply_initiated,
@@ -222,6 +244,50 @@ app.post('/webhooks', async (req, res) => {
                 }
                 break;
               case 'text':
+                const checkIfUserRegistered = await getMemberDetails(
+                  message_from
+                );
+
+                console.log('HERE?', message_from);
+
+                //User isn't registered in our chama.
+                if (!checkIfUserRegistered) {
+                  console.log('User not registered');
+                  await replyMessage(
+                    message_types['register'],
+                    user_reply_initiated,
+                    message_from
+                  );
+                  cache_message_ids.unshift(message.id);
+
+                  return res.end();
+                }
+                const data = getWekezaWelcomeMessage(
+                  user_reply_phone_number,
+                  'Welcome to Wekeza!'
+                );
+                //todo:// make send welcome message re-usable
+                await sendMessage(data)
+                  .then((response) => {
+                    const { contacts, messages } = response.data;
+                    const user_reply_phone_number = contacts[0].wa_id;
+                    const message_id = messages[0].id;
+
+                    req.user_phone = user_reply_phone_number;
+
+                    getMessageId(
+                      message_id,
+                      user_reply_phone_number,
+                      'business'
+                    );
+                    res.sendStatus(201);
+                    return;
+                  })
+                  .catch((err) => {
+                    console.log('THE ERROR', err.response['data']);
+                    return res.sendStatus(400);
+                  });
+
               //TODO: Store message detail logs:
               /**
              * {
@@ -304,6 +370,7 @@ app.get('/chama-members', async (req, res) => {
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
+  console.log('THE REQUEST', req);
   next(createError(404));
 });
 

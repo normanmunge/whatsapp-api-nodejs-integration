@@ -289,9 +289,12 @@ router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
         `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
         data,
         header_options,
-        (err, resp) => {
+        async (err, resp) => {
           if (resp) {
-            console.log('the response to send money', resp.body);
+            console.log(
+              'the response to send money to next recipient using stk push:',
+              resp.body
+            );
             //todo: change recipient number after cycle count complete or when admin triggers
             //todo: save the stk debit transfer transactions to our DB
 
@@ -312,11 +315,51 @@ router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
             // 		"updated_at": "2023-10-14T07:48:22.958711Z"
             // 	}
             // }
-            // res.status(200).end();
-            res.status(200);
+            if (req.body.transaction_status === 'in_progress') {
+              const reply_to_user =
+                "Sending. We'll notify you when the transaction is done!";
+              const chat_reply = setChatReply(
+                reply_to_user,
+                req.body.phone_number
+              );
+
+              await sendMessage(chat_reply)
+                .then(async (response) => {
+                  console.log(
+                    'THE SEND MESSAGE MPESA IN PROGRESS WEBHOOK REPLY',
+                    response
+                  );
+                  if (response.status === 200) {
+                    const member = await getMember(receiver_phone_number);
+                    console.log(
+                      'THE SEND MESSAGE MPESA IN PROGRESS WEBHOOK REPLY 2',
+                      member
+                    );
+
+                    const reportsRef = Reports.doc();
+
+                    await reportsRef.set({
+                      amount_received: amount,
+                      chama: member['chama'],
+                      date_of_payment: created_at,
+                      member: member['next_recipient_id'], //recipient,
+                      member_phone: receiver_phone_number,
+                    });
+                    res.status(200).end();
+                  } else {
+                    mpesa_confirmation = 'Cash not sent!!!';
+                    res.status(400).end();
+                  }
+                })
+                .catch((error) => {
+                  res.status(400).end();
+                });
+            }
+
+            res.sendStatus(200);
           } else {
             console.log('the error', err);
-            res.status(400);
+            res.sendStatus(400);
           }
         }
       );
@@ -364,7 +407,7 @@ router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
     header_options,
     (err, resp) => {
       if (resp) {
-        console.log('the response to send money', resp.body);
+        console.log('the response to send money to next recipient', resp.body);
         //todo: change recipient number after cycle count complete or when admin triggers
         //todo: save the stk debit transfer transactions to our DB
         //           {
@@ -384,6 +427,7 @@ router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
         // 		"updated_at": "2023-10-14T07:48:22.958711Z"
         // 	}
         // }
+
         res.status(200);
       } else {
         console.log('the error', err);

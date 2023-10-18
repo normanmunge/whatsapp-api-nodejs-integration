@@ -14,6 +14,7 @@ const {
 router.use(body_parser.json());
 
 router.post('/', (req, res, next) => {
+  //test purposes
   const data = getWekezaWelcomeMessage(
     process.env.RECIPIENT_WAID,
     'Welcome to Wekeza!'
@@ -34,9 +35,10 @@ router.post('/', (req, res, next) => {
       return;
     })
     .catch((err) => {
-      console.log('THE ERROR:', err.data);
-      res.sendStatus(400);
-      return;
+      console.log('THE ERROR', err.response['data']);
+      return res
+        .status(401)
+        .json({ error: err.response['data'].error.message });
     });
 });
 
