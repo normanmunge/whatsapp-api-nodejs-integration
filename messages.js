@@ -5,6 +5,7 @@ const router = express.Router();
 const needle = require('needle');
 
 const { User, getMemberDetails } = require('./firebase/User');
+const { Joinlist } = require('./firebase/JoinList');
 const bankwaveRouter = require('./mpesa/onetap');
 const { triggerStkPush, generateAccessToken } = require('./mpesa/methods');
 
@@ -334,6 +335,14 @@ const replyMessage = async (
         registration_reply,
         user_reply_phone_number
       );
+
+      const registrationRef = Joinlist.doc();
+      await registrationRef.set({
+        name: null,
+        email: null,
+        phone: user_reply_phone_number,
+        source: 'whatsapp',
+      });
     }
 
     if (wekeza_reply) {
