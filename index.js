@@ -63,11 +63,35 @@ app.use('/welcome', welcomeRouter);
 //   return;
 // });
 
+//Configure our webhook
+app.get('/webhooks', async (req, res) => {
+  try {
+    if (
+      req.query['hub.mode'] == 'subscribe' &&
+      req.query['hub.verify_token'] == verify_token
+    ) {
+      res.send(req.query['hub.challenge']);
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (err) {
+    console.log('ERROR', err);
+    res.sendStatus(400);
+  }
+});
+
 let cache_message_ids = [];
 
 app.post('/webhooks', async (req, res) => {
   try {
+    //resource: https://business.whatsapp.com/blog/how-to-use-webhooks-from-whatsapp-business-api
+
     const user_reply = req.body.entry[0];
+
+    if (user_reply !== 'whatsapp_business_account') {
+      // not from the whatsapp business webhook so dont process
+      return res.sendStatus(400);
+    }
 
     console.log('THE WEBHOOK reply:', user_reply);
 
@@ -255,9 +279,10 @@ app.post('/webhooks', async (req, res) => {
       }
       // }
     }
-    return res.send(200).end();
+    return res.sendStatus(200);
   } catch (error) {
-    return res.send(500).end();
+    console.log('THE ERROR', error);
+    return res.sendStatus(400);
   }
 });
 
@@ -300,6 +325,7 @@ app.get('/chama-members', async (req, res) => {
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
+  console.log('THE REQUEST', req);
   next(createError(404));
 });
 
