@@ -244,6 +244,8 @@ app.post('/webhooks', async (req, res) => {
                   message_from
                 );
 
+                console.log('HERE?', message_from);
+
                 //User isn't registered in our chama.
                 if (!checkIfUserRegistered) {
                   console.log('User not registered');

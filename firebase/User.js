@@ -17,6 +17,8 @@ const getMember = async (phone) => {
   }
   const member_snapshot = await User.where('phone_number', '==', phone).get();
 
+  console.log('THE MEMBER SNAPSHOT', member_snapshot);
+
   if (member_snapshot.length) {
     let member = null;
     let id = null;
