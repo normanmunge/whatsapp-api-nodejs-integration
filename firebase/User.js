@@ -5,7 +5,6 @@ const { Filter } = require('firebase-admin/firestore');
 const User = db.collection('Members');
 
 let current_member = null;
-let total_chama_members = 0;
 
 const getMember = async (phone) => {
   if (
@@ -20,8 +19,8 @@ const getMember = async (phone) => {
   if (member_snapshot.size > 0) {
     let member = null;
     let id = null;
-    total_chama_members = member_snapshot.length;
 
+    //todo: logic of user in more than 1 chama
     member_snapshot.forEach((doc) => {
       member = doc.data();
       id = doc.id;
@@ -101,10 +100,15 @@ const getMemberDetails = async (phone_no) => {
         0
       );
 
+      const total_chama_members = await User.where('chama', '==', chama).get();
+
       //reset the cyclec count if it's the last member
       let next_recipient_cycle =
-        cycle_count === total_chama_members ? 1 : cycle_count + 1;
+        cycle_count === total_chama_members.size
+          ? 1
+          : chama_profile['current_cycle_count'] + 1;
 
+      chama_profile['next_cycle_count'] = next_recipient_cycle;
       //Next recipient member
       if (
         typeof current_member === 'object' &&

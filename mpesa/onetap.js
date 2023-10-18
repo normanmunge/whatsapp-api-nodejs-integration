@@ -5,7 +5,7 @@ require('dotenv').config();
 const needle = require('needle');
 
 const { Chama, Reports, ChamaCycleCount } = require('../firebase/Chama');
-const { getMember } = require('../firebase/User');
+const { User, getMember } = require('../firebase/User');
 const { message_ids, sendMessage, setChatReply } = require('../messages');
 const { triggerStkPush, header_options } = require('./methods');
 
@@ -345,6 +345,24 @@ router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
                       member: member['next_recipient_id'], //recipient,
                       member_phone: receiver_phone_number,
                     });
+
+                    //update chama cycle count
+                    const total_chama_members = await User.where(
+                      'chama',
+                      '==',
+                      chama
+                    ).get();
+
+                    let next_recipient_cycle =
+                      cycle_count === total_chama_members.size
+                        ? 1
+                        : member['cycle_count'] + 1;
+
+                    const chamaRef = Chama.doc(member['chama']);
+                    await chamaRef.update({
+                      current_cycle_count: next_recipient_cycle,
+                    });
+
                     res.status(200).end();
                   } else {
                     mpesa_confirmation = 'Cash not sent!!!';
