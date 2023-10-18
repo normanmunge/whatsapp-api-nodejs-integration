@@ -27,6 +27,7 @@ const {
   getMessageId,
   sendMessage,
   replyMessage,
+  getWekezaWelcomeMessage,
   message_types,
 } = require('./messages');
 
@@ -86,13 +87,12 @@ app.post('/webhooks', async (req, res) => {
   try {
     //resource: https://business.whatsapp.com/blog/how-to-use-webhooks-from-whatsapp-business-api
 
-    const user_reply = req.body.entry[0];
-
-    if (user_reply !== 'whatsapp_business_account') {
+    if (req.body.object !== 'whatsapp_business_account') {
       // not from the whatsapp business webhook so dont process
       return res.sendStatus(400);
     }
 
+    const user_reply = req.body.entry[0];
     console.log('THE WEBHOOK reply:', user_reply);
 
     if (user_reply) {
@@ -197,21 +197,20 @@ app.post('/webhooks', async (req, res) => {
         if (typeof message === 'object') {
           console.log('mss', message);
 
-          console.log('THE CACHED WEBHOOK', cache_message_ids[0]);
-
           //if the message id is different, then it's a new request
           if (cache_message_ids[0] !== message.id) {
-            console.log('LOGIC TO SEND TEXT BACK TO USER');
             switch (message_type) {
               case 'button':
                 const message_button_payload = await message.button.payload;
                 switch (message_button_payload) {
                   case 'Your Chama Profile':
-                    await replyMessage(
+                    const profile = await replyMessage(
                       message_types['chama_profile'],
                       user_reply_initiated,
                       message_from
                     );
+
+                    console.log('THE PROFILE RESPONSE RETURNED:', profile);
 
                     break;
                   case 'Send Contribution':
@@ -230,7 +229,7 @@ app.post('/webhooks', async (req, res) => {
                   case 'Stop promotions':
                     console.log('STOP THE PROMOTIONS MESSAGES');
                     break;
-                  case 'Send':
+                  case 'Confirm':
                     await replyMessage(
                       message_types['send_confirm_contrib'],
                       user_reply_initiated,
@@ -242,6 +241,31 @@ app.post('/webhooks', async (req, res) => {
                 }
                 break;
               case 'text':
+                const data = getWekezaWelcomeMessage(
+                  process.env.RECIPIENT_WAID,
+                  'Welcome to Wekeza!'
+                );
+                //todo:// make send welcome message re-usable
+                await sendMessage(data)
+                  .then((response) => {
+                    const { contacts, messages } = response.data;
+                    const user_reply_phone_number = contacts[0].wa_id;
+                    const message_id = messages[0].id;
+
+                    req.user_phone = user_reply_phone_number;
+
+                    getMessageId(
+                      message_id,
+                      user_reply_phone_number,
+                      'business'
+                    );
+                    res.sendStatus(201);
+                    return;
+                  })
+                  .catch((err) => {
+                    console.log('THE ERROR', err.response['data']);
+                    return res.sendStatus(400);
+                  });
               //TODO: Store message detail logs:
               /**
              * {
@@ -279,10 +303,10 @@ app.post('/webhooks', async (req, res) => {
       }
       // }
     }
-    return res.sendStatus(200);
+    return res.end();
   } catch (error) {
-    console.log('THE ERROR', error);
-    return res.sendStatus(400);
+    console.log('THE ERROR IN WEBHOOK REPLY', error);
+    return res.sendStatus(400).end();
   }
 });
 
