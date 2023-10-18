@@ -9,6 +9,8 @@ const {
   getMessageId,
 } = require('../messages');
 
+// const { getMember } = require('../firebase/User');
+
 router.use(body_parser.json());
 
 router.post('/', (req, res, next) => {
