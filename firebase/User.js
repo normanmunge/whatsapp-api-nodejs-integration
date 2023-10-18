@@ -4,16 +4,34 @@ const { Filter } = require('firebase-admin/firestore');
 
 const User = db.collection('Members');
 
+let current_member = null;
+let total_chama_members = 0;
+
 const getMember = async (phone) => {
+  console.log('GETS HERE FOR MEMBER');
+  if (
+    current_member &&
+    typeof current_member === 'object' &&
+    current_member?.phone_number === phone
+  ) {
+    return current_member;
+  }
+
+  console.log('GETS HERE FOR MEMBER 2');
   const member_snapshot = await User.where('phone_number', '==', phone).get();
 
   let member = null;
+  let id = null;
+  total_chama_members = member_snapshot.length;
 
   member_snapshot.forEach((doc) => {
     member = doc.data();
+    id = doc.id;
   });
 
   if (member) {
+    current_member = member;
+    current_member['id'] = id;
     return member;
   }
 
@@ -24,6 +42,7 @@ const getMemberDetails = async (phone_no) => {
   const phone = phone_no.toString();
 
   const dtls = await getMember(phone);
+
   const { chama, cycle_count, name, phone_number, is_offical } = dtls;
 
   if (chama) {
@@ -39,14 +58,22 @@ const getMemberDetails = async (phone_no) => {
       return;
     } else {
       chama_profile = chama_doc.data();
+      current_member['chama_profile'] = chama_profile;
     }
 
     //Total Chama Contributions :: todo can be simplified into a reusable function
     const contributions = [];
+    //Individual member total contributions
+    const ind_contributions = [];
+
     const chama_contribution = await Reports.where('chama', '==', chama).get();
+
     chama_contribution.forEach((doc) => {
-      const { amount_received } = doc.data();
+      const { amount_received, member_phone } = doc.data();
       contributions.push(amount_received);
+      if (member_phone === phone_number) {
+        ind_contributions.push(amount_received);
+      }
     });
 
     const total_chama_contributions = contributions.reduce(
@@ -54,36 +81,44 @@ const getMemberDetails = async (phone_no) => {
       0
     );
 
-    //Individual member total contributions
-    const ind_contributions = [];
-    const ind_chama_contribution = await Reports.where('chama', '==', chama)
-      .where('member_phone', '==', phone_number)
-      .get();
-    ind_chama_contribution.forEach((doc) => {
-      const { amount_received } = doc.data();
-      ind_contributions.push(amount_received);
-    });
+    // //Individual member total contributions
+    // const ind_contributions = [];
+
+    // const ind_chama_contribution = await Reports.where('chama', '==', chama)
+    //   .where('member_phone', '==', phone_number)
+    //   .get();
+    // ind_chama_contribution.forEach((doc) => {
+    //   const { amount_received } = doc.data();
+    //   ind_contributions.push(amount_received);
+    // });
 
     const ind_total_chama_contributions = ind_contributions.reduce(
       (acc, currentValue) => acc + currentValue,
       0
     );
 
+    //reset the cyclec count if it's the last member
+    let next_recipient_cycle =
+      cycle_count === total_chama_members ? 1 : cycle_count + 1;
+
     //Next recipient member
-    const nextRecipientMemberSnapshot = await User.where('chama', '==', chama)
-      .where('cycle_count', '==', cycle_count + 1)
-      .get();
+    if (
+      typeof current_member === 'object' &&
+      current_member?.next_recipient_member?.cycle_count ===
+        next_recipient_cycle
+    ) {
+      next_recipient_member = current_member['next_recipient_member'];
+    } else {
+      const nextRecipientMemberSnapshot = await User.where('chama', '==', chama)
+        .where('cycle_count', '==', next_recipient_cycle)
+        .get();
 
-    // const nextRecipientMemberSnapshot = await User.where(
-    //   Filter.and(
-    //     Filter.where('chama', '==', chama),
-    //     Filter.where('cycle_count', '==', cycle_count + 1)
-    //   )
-    // ).get();
-
-    nextRecipientMemberSnapshot.forEach((doc) => {
-      next_recipient_member = doc.data();
-    });
+      nextRecipientMemberSnapshot.forEach((doc) => {
+        next_recipient_member = doc.data();
+        current_member['next_recipient_member'] = next_recipient_member;
+        current_member['next_recipient_id'] = doc.id;
+      });
+    }
 
     const details = {
       member: dtls,
