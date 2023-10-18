@@ -248,8 +248,6 @@ app.post('/webhooks', async (req, res) => {
                   message_from
                 );
 
-                console.log('HERE?', message_from);
-
                 //User isn't registered in our chama.
                 if (!checkIfUserRegistered) {
                   console.log('User not registered');
@@ -263,7 +261,7 @@ app.post('/webhooks', async (req, res) => {
                   return res.end();
                 }
                 const data = getWekezaWelcomeMessage(
-                  user_reply_phone_number,
+                  message_from,
                   'Welcome to Wekeza!'
                 );
                 //todo:// make send welcome message re-usable
@@ -280,8 +278,7 @@ app.post('/webhooks', async (req, res) => {
                       user_reply_phone_number,
                       'business'
                     );
-                    res.sendStatus(201);
-                    return;
+                    return res.sendStatus(200);
                   })
                   .catch((err) => {
                     console.log('THE ERROR', err.response['data']);
@@ -289,32 +286,6 @@ app.post('/webhooks', async (req, res) => {
                   });
 
               //TODO: Store message detail logs:
-              /**
-             * {
-              from: '254712658102',
-              id: 'wamid.HBgMMjU0NzEyNjU4MTAyFQIAEhgUM0E3QjlDQzRGMTlCQ0I5MEVDNzgA',
-              timestamp: '1697425297',
-              text: { body: 'send' },
-              type: 'text'
-            }
-             */
-              // const msg = await message.text.body;
-              // if (msg.toLowerCase() === 'send') {
-              //   await replyMessage(
-              //     message_types['send_confirm_contrib'],
-              //     user_reply_initiated,
-              //     message_from
-              //   );
-              // }
-
-              // if (msg === 'Send Contribution') {
-              //   const endpoint = app;
-              //   await replyMessage(
-              //     message_types['send_contrib'],
-              //     user_reply_initiated,
-              //     message_from
-              //   );
-              // }
               default:
                 break;
             }
@@ -325,7 +296,7 @@ app.post('/webhooks', async (req, res) => {
       }
       // }
     }
-    return res.sendStatus(200);
+    return res.end();
   } catch (error) {
     return res.sendStatus(500);
   }
