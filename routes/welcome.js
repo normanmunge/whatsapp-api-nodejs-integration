@@ -14,6 +14,7 @@ const {
 router.use(body_parser.json());
 
 router.post('/', (req, res, next) => {
+  //test purposes
   const data = getWekezaWelcomeMessage(
     process.env.RECIPIENT_WAID,
     'Welcome to Wekeza!'
