@@ -17,9 +17,7 @@ const getMember = async (phone) => {
   }
   const member_snapshot = await User.where('phone_number', '==', phone).get();
 
-  console.log('THE MEMBER SNAPSHOT', member_snapshot);
-
-  if (member_snapshot.length) {
+  if (member_snapshot.size > 0) {
     let member = null;
     let id = null;
     total_chama_members = member_snapshot.length;
