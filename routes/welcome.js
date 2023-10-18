@@ -34,9 +34,10 @@ router.post('/', (req, res, next) => {
       return;
     })
     .catch((err) => {
-      console.log('THE ERROR:', err.data);
-      res.sendStatus(400);
-      return;
+      console.log('THE ERROR', err.response['data']);
+      return res
+        .status(401)
+        .json({ error: err.response['data'].error.message });
     });
 });
 
