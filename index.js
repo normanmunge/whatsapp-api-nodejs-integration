@@ -8,6 +8,8 @@ const body_parser = require('body-parser');
 const cors = require('cors');
 const app = express().use(body_parser.json());
 const createError = require('http-errors');
+
+const { setChamaProfileText } = require('./utils/utils');
 // const fs = require('fs');
 // const https = require('https');
 // const path = require('path');
@@ -200,13 +202,15 @@ app.post('/webhooks', async (req, res) => {
         // console.log('THE MESSAGE IS:', message.button.payload);
         if (typeof message === 'object') {
           console.log('mss', message);
+
+          let chama_profile_text = setChamaProfileText();
           //if the message id is different, then it's a new request
           if (cache_message_ids[0] !== message.id) {
             switch (message_type) {
               case 'button':
                 const message_button_payload = await message.button.payload;
                 switch (message_button_payload) {
-                  case 'Your Chama Profile':
+                  case chama_profile_text:
                     const profile = await replyMessage(
                       message_types['chama_profile'],
                       user_reply_initiated,

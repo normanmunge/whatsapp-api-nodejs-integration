@@ -9,9 +9,12 @@ const { Joinlist } = require('./firebase/JoinList');
 const bankwaveRouter = require('./mpesa/onetap');
 const { triggerStkPush, generateAccessToken } = require('./mpesa/methods');
 const { Collections } = require('./firebase/Transactions');
+const { setChamaProfileText } = require('./utils/utils');
+
+let chama_profile_text = setChamaProfileText();
 
 message_types = {
-  chama_profile: 'Your Chama Profile' || 'View Chama Profile',
+  chama_profile: chama_profile_text,
   send_contrib: 'Send Contribution' || 'Send Contributions',
   send_confirm_contrib: 'send',
   stop_promotions: 'Stop promotions',
