@@ -216,8 +216,8 @@ const replyMessage = async (
           });
 
           paid_members.forEach((i, ind) => {
-            paid_member_list_reply += `${ind + 1}. ${i.name} - ${
-              i.phone
+            paid_member_list_reply += `${ind + 1}. ${i.name} - +${
+              i.phone_number
             } ✅ \n`;
           });
 
