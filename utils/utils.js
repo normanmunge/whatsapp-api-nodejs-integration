@@ -3,7 +3,7 @@ const ENV =
     ? `.env.${process.env.NODE_ENV}`
     : `.env`;
 
-const setEnvironment = () => {
+const checkEnvironment = () => {
   const environment = ENV;
   if (environment.includes('.dev')) {
     return 'development';
@@ -16,11 +16,11 @@ const setEnvironment = () => {
 const setChamaProfileText = () => {
   console.log('THE ENVIRONMENT IS:', ENV);
   let chama_profile_text =
-    setEnvironment() === 'development'
+    checkEnvironment() === 'development'
       ? 'Your Chama Profile'
       : 'View Chama Profile';
 
   return chama_profile_text;
 };
 
-module.exports = { setEnvironment, setChamaProfileText };
+module.exports = { checkEnvironment, setChamaProfileText };
