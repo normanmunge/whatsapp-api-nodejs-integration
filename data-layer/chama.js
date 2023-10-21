@@ -10,7 +10,11 @@ class ChamaDataLayer {
 
     return id;
   }
-  getChama(phone) {}
+
+  async getChama(id) {
+    const chama = await db('chama').where('id', id).first();
+    return chama;
+  }
 }
 
 module.exports = new ChamaDataLayer();

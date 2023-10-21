@@ -39,9 +39,15 @@ const { connectMetaWehbooks, postMetaWebhooks } = metaController;
 router.get('/webhooks', connectMetaWehbooks);
 router.post('/webhooks', postMetaWebhooks);
 
-//FIREBASE ENDPOINTS
+//ENDPOINTS
 const chamaController = require('../controller/chama');
-const { createChamaMember, getChamaMembers } = chamaController;
+const { createChamaMember, getChamaMembers, getChama, createChama } =
+  chamaController;
+//Chama
+router.post('/create-chama', createChama);
+router.get('/get-chama/:id', getChama);
+
+//Members
 router.post('/create-chama-member', createChamaMember);
 router.get('/chama-members', getChamaMembers);
 

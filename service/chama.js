@@ -4,6 +4,10 @@ class ChamaService {
   createChama(data) {
     return chama.createChama(data);
   }
+
+  getChama(id) {
+    return chama.getChama(id);
+  }
 }
 
 module.exports = new ChamaService();

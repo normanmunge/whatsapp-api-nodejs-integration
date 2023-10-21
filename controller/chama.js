@@ -7,22 +7,7 @@ const { User, getMemberDetails } = require('../firebase/User');
 class Chama {
   constructor() {}
 
-  //Firebase solution
-  // async createChamaMember(req, res) {
-  //   try {
-  //     const data = req.body;
-  //     const memberRef = User.doc();
-  //     await memberRef.set(data);
-
-  //     res.status(201).json({ data: 'User added' });
-  //   } catch (error) {
-  //     console.log('ERROR CREATING MEMBER', error);
-  //     res.status(403).json({ error: error });
-  //     return;
-  //   }
-  // }
-
-  async createChamaMember(req, res) {
+  async createChama(req, res) {
     try {
       const {
         name,
@@ -55,7 +40,32 @@ class Chama {
     }
   }
 
-  async getChama(req, res) {}
+  async getChama(req, res) {
+    try {
+      const id = req.params.id;
+      const chama = await chamaService.getChama(id);
+      res.status(200).json(chama);
+    } catch (error) {
+      console.log('ERROR RETURNING CHAMA', error);
+      res.status(500).json({ error: error });
+    }
+  }
+
+  //members
+  //Firebase solution
+  async createChamaMember(req, res) {
+    try {
+      const data = req.body;
+      const memberRef = User.doc();
+      await memberRef.set(data);
+
+      res.status(201).json({ data: 'User added' });
+    } catch (error) {
+      console.log('ERROR CREATING MEMBER', error);
+      res.status(403).json({ error: error });
+      return;
+    }
+  }
 
   async getChamaMembers(req, res) {
     try {
