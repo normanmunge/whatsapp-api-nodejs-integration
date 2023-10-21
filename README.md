@@ -3,12 +3,20 @@
 ## Prerequisites:
 
 - Need to have a developer Meta Account. Sign up using [develeopers.facebook.com]
-- Need to have node and npm installed on your local computer. This app is run using node v16
+- Need to have node and npm installed on your local computer. This app is run using node v14.
+- The dabatase will run on Postgresql which is a structured relational database.
 
 ## TOOLS USED:
 
 1. Postman - Used to fork out the Whatsapp API Cloud API. [https://web.postman.co/workspace/My-Workspace~fb6e0718-74fb-4368-868a-f5ed1b24a8e1/request/315327-1aa2a3f8-2f2f-4e80-baaa-7a7b7f3c3f7a]
 2. Ngrok - Cross platform tunnel to expose our local development server to the internet
+3. Docker
+4. Knex - Used as our ORM tool to manage migrations into our postgres sql [https://knexjs.org/]
+
+## Knex Installation
+
+1. Install using `npm i knex pg --save`
+2. Create knex configuration file: `npx knex init`
 
 ### Ngrok Installation
 
