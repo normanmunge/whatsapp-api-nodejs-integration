@@ -17,6 +17,10 @@
 
 1. Install using `npm i knex pg --save`
 2. Create knex configuration file: `npx knex init`
+3. To make an initial migration: `npx knex migrate:make init --migrations-directory db/migrations`
+4. To make subsequent migrations: `npx knex migrate:latest --knexfile db/knexfile.js`
+5. To create seed db: `npx knex seed:make (seed_name)`
+6. To seed db: `npx knex seed:run`
 
 ### Ngrok Installation
 
