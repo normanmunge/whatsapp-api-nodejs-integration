@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "chama_id": 1,
+    "member_id": 1,
+    "chama_cycle_count": 1,
+    "cycle_number": 1
+  },
+  {
+    "id": 2,
+    "chama_id": 1,
+    "member_id": 2,
+    "chama_cycle_count": 1,
+    "cycle_number": 2
+  }
+]
