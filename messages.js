@@ -21,6 +21,7 @@ message_types = {
   register: 'Register',
 };
 
+//send message to whatsapp
 const sendMessage = (data) => {
   const config = {
     method: 'POST',
@@ -151,15 +152,11 @@ const setChatReply = (reply, user_reply_phone_number) => {
 const replyMessage = async (
   type,
   user_reply_initiated,
-  user_reply_phone_number
+  user_reply_phone_number,
+  chama,
+  member
 ) => {
-  if (
-    user_reply_initiated
-    //&&
-    // typeof value['statuses'] !== 'undefined' &&
-    // value.statuses.length &&
-    // value.statuses[0].status === 'read'
-  ) {
+  if (user_reply_initiated) {
     //ToDO :: Query our database to find the user details based on their phone number and send a breakdown of their details
     // 1. The number of chamas they belong to
     // 2. The total amount of contributions
@@ -167,63 +164,284 @@ const replyMessage = async (
     // 4. The amount contribution for the month
     // 5. Next recipient in the list with the deadline date.
 
-    const details = await getMemberDetails(user_reply_phone_number);
+    //FIREBASE ENDPOINTS:
+    //const details = await getMemberDetails(user_reply_phone_number);
+    //let wekeza_reply = null;
+    // if (details) {
+    //   const {
+    //     member,
+    //     chama,
+    //     total_chama_contributions,
+    //     ind_total_chama_contributions,
+    //     next_recipient_member,
+    //   } = details;
+    //   const { name } = member;
+
+    //   const { contribution_amount, members_list } = chama;
+
+    //   console.log('WHAT DOES THE TYPE INLCUDE', type);
+
+    //   if (type.includes('Chama Profile')) {
+    //     //Sets up the next chama cycle date:
+    //     const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
+    //     let contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date} of ${chama_cycle_next_date}. \n\n`;
+
+    //     const transactionsRef = await Collections.where(
+    //       'chama_account',
+    //       '==',
+    //       chama['onetap_account_no']
+    //     ).get();
+
+    //     let paid_member_list_reply = '';
+
+    //     if (transactionsRef.size > 0) {
+    //       let paid_members;
+
+    //       const list = [];
+    //       members_list.forEach((doc) => {
+    //         list.push(doc.data());
+    //       });
+
+    //       console.log('THE LIST', list);
+
+    //       transactionsRef.forEach((doc) => {
+    //         const phone = doc.data().phone_number;
+    //         console.log('THE MEMBERS HERE', phone);
+
+    //         paid_members = list.filter((i) => {
+    //           return i.phone_number == phone;
+    //         });
+    //       });
+
+    //       paid_members.forEach((i, ind) => {
+    //         paid_member_list_reply += `${ind + 1}. ${i.name} - +${
+    //           i.phone_number
+    //         } ✅ \n`;
+    //       });
+
+    //       console.log('THE PAID MEMBER LIST', paid_member_list_reply);
+
+    //       contribution_reply += `${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
+    //     }
+
+    //     wekeza_reply = await setChatReply(
+    //       contribution_reply,
+    //       user_reply_phone_number
+    //     );
+    //   } else if (type.includes('Contribution')) {
+    //     //TODO: //WHAT IF USER SENDS A TEXT THAT CONTAINS THIS
+    //     console.log('THE NEXT RECIPIENT IS:', next_recipient_member);
+
+    //     wekeza_reply = await confirmRecipientMessage(
+    //       user_reply_phone_number,
+    //       next_recipient_member
+    //     );
+    //   } else if (type === message_types?.send_confirm_contrib) {
+    //     const BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
+
+    //     let header_options = {
+    //       Accept: 'application/json',
+    //       'Content-Type': 'application/json',
+    //     };
+
+    //     const generateAccessToken = async () => {
+    //       try {
+    //         const auth = {
+    //           client_id: process.env.BANKWAVE_CLIENT_ID,
+    //           client_secret: process.env.BANKWAVE_CLIENT_SECRET,
+    //         };
+
+    //         const config = {
+    //           method: 'POST',
+    //           url: `${BANKWAVE_API_BASE_URL}access-token/`,
+    //           headers: header_options,
+    //           data: auth,
+    //         };
+
+    //         return await axios(config)
+    //           .then((res) => {
+    //             const { access_token } = res.data;
+    //             header_options['Authorization'] = `Bearer ${access_token}`;
+
+    //             return access_token;
+    //           })
+    //           .catch((err) => {
+    //             console.log(
+    //               'THE ERROR: SEND CONTRIBUTION GENERATE ACCESS TOKEN:',
+    //               err
+    //             );
+    //           });
+    //       } catch (error) {
+    //         console.log('THE ERROR SEND CONTRIBUTION 2', error);
+    //       }
+    //     };
+
+    //     await generateAccessToken().then(async (res) => {
+    //       if (typeof res === 'string') {
+    //         const { onetap_account_no, contribution_amount } = chama;
+    //         console.log('THE PHONE NUMBER', user_reply_phone_number);
+    //         const data = {
+    //           callback_url: `${process.env.NGROK_DOMAIN}/bankwave/stk-push/callback/`,
+    //           account: onetap_account_no,
+    //           amount: contribution_amount,
+    //           phone_number: user_reply_phone_number,
+    //         };
+
+    //         const config = {
+    //           method: 'POST',
+    //           url: `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
+    //           headers: header_options,
+    //           data: data,
+    //         };
+
+    //         return axios(config)
+    //           .then(async (resp) => {
+    //             //console.log('THE RESPONSE', resp, 'OR ERROR:');
+    //             const { data } = resp.body;
+    //             const {
+    //               id,
+    //               account,
+    //               amount,
+    //               transaction_type,
+    //               transaction_category,
+    //               transaction_status,
+    //               callback_url,
+    //               phone_number,
+    //               created_at,
+    //               updated_at,
+    //             } = data;
+    //             if (data) {
+    //               const transactionRef = Collections.doc();
+
+    //               let response = {
+    //                 id: id,
+    //                 amount: amount,
+    //                 chama_account: account['account_number'],
+    //                 phone_number: phone_number,
+    //                 transaction_category: transaction_category,
+    //                 transaction_status: transaction_status,
+    //                 transaction_type: transaction_type,
+    //                 created_at: created_at,
+    //                 updated_at: updated_at,
+    //                 callback_url: callback_url,
+    //               };
+    //               await transactionRef.set(response);
+    //             }
+    //             return;
+    //             //return res.status(200).json({ data: resp.body });
+    //           })
+    //           .catch((err) => {
+    //             console.log('Errro 2', err);
+    //             return;
+    //             //res.status(400).json({ error: err });
+    //           });
+
+    //         // await needle.post(
+    //         //   `${BANKWAVE_API_BASE_URL}transaction/stk-push/`,
+    //         //   data,
+    //         //   header_options,
+    //         //   async (err, resp) => {
+    //         //     if (resp) {
+    //         //       console.log('THE RESPONSE', resp, 'OR ERROR:', err);
+    //         //       const { data } = resp.body;
+    //         //       const {
+    //         //         id,
+    //         //         account,
+    //         //         amount,
+    //         //         transaction_type,
+    //         //         transaction_category,
+    //         //         transaction_status,
+    //         //         callback_url,
+    //         //         phone_number,
+    //         //         created_at,
+    //         //         updated_at,
+    //         //       } = data;
+    //         //       if (data) {
+    //         //         const transactionRef = Collections.doc();
+
+    //         //         let response = {
+    //         //           id: id,
+    //         //           amount: amount,
+    //         //           chama_account: account['account_number'],
+    //         //           phone_number: phone_number,
+    //         //           transaction_category: transaction_category,
+    //         //           transaction_status: transaction_status,
+    //         //           transaction_type: transaction_type,
+    //         //           created_at: created_at,
+    //         //           updated_at: updated_at,
+    //         //           callback_url: callback_url,
+    //         //         };
+    //         //         await transactionRef.set(response);
+    //         //       }
+    //         //       //return res.status(200).json({ data: resp.body });
+    //         //     } else {
+    //         //       //res.status(400).json({ error: err });
+    //         //       return;
+    //         //     }
+    //         //   }
+    //         // );
+    //       }
+    //     });
+    //   }
+    // } else {
+    //   //let's tell the user that we'll contact them.
+    //   const registration_reply = `Thanks for contacting us. We are yet to be register you in a chama 😔. That might be an issue on our end so our customer support will reach out to you in the next 24hours. You could also contact us directly through the number or by shooting us an email. Our contact details are on our Whatsapp profile. \n\n Thank you.`;
+    //   wekeza_reply = await setChatReply(
+    //     registration_reply,
+    //     user_reply_phone_number
+    //   );
+
+    //   const registrationRef = Joinlist.doc();
+    //   await registrationRef.set({
+    //     name: null,
+    //     email: null,
+    //     phone: user_reply_phone_number,
+    //     source: 'whatsapp',
+    //   });
+    // }
+
+    //POSTGRES
+    const chama_member = { member: member };
+    const details = Object.assign(chama, chama_member);
+
+    console.log('THE DETAILS', details);
+
     let wekeza_reply = null;
-    if (details) {
+    if (typeof details === 'object') {
       const {
         member,
-        chama,
-        total_chama_contributions,
-        ind_total_chama_contributions,
-        next_recipient_member,
+        current_cycle_count,
+        frequency,
+        next_recipient,
+        total_contributions,
+        your_contributions,
+        paid_members,
       } = details;
-      const { name } = member;
 
-      const { contribution_amount, members_list } = chama;
+      const { name, id, is_official, whatsapp_opt_in } = member;
+      const { contribution_amount, deadline_day, extension_period } = frequency; //frequency.frequency
+      //next_recipient.name, next_recipient.phone
 
-      console.log('WHAT DOES THE TYPE INLCUDE', type);
+      //todo: fetch paid member list, unpaid member list
+
+      // const { contribution_amount, members_list } = chama;
 
       if (type.includes('Chama Profile')) {
         //Sets up the next chama cycle date:
-        const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
-        let contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${chama.name}_* \n\n The total chama contribution is \n KES ${total_chama_contributions} \n Your individual total contribution is \n KES ${ind_total_chama_contributions} \n October Contribution \n KES ${contribution_amount} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient_member['name']} (+${next_recipient_member['phone_number']}). \n Contributions should be sent by ${deadline_date} of ${chama_cycle_next_date}. \n\n`;
 
-        const transactionsRef = await Collections.where(
-          'chama_account',
-          '==',
-          chama['onetap_account_no']
-        ).get();
+        //const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
+        let contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${details.name}_* \n\n The total chama contribution is \n KES ${total_contributions} \n Your individual total contribution is \n KES ${your_contributions} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient['name']} (+${next_recipient['phone_number']}).`;
 
         let paid_member_list_reply = '';
 
-        if (transactionsRef.size > 0) {
-          let paid_members;
-
-          const list = [];
-          members_list.forEach((doc) => {
-            list.push(doc.data());
-          });
-
-          console.log('THE LIST', list);
-
-          transactionsRef.forEach((doc) => {
-            const phone = doc.data().phone_number;
-            console.log('THE MEMBERS HERE', phone);
-
-            paid_members = list.filter((i) => {
-              return i.phone_number == phone;
-            });
-          });
-
+        if (paid_members.length) {
           paid_members.forEach((i, ind) => {
             paid_member_list_reply += `${ind + 1}. ${i.name} - +${
               i.phone_number
             } ✅ \n`;
           });
 
-          console.log('THE PAID MEMBER LIST', paid_member_list_reply);
-
-          contribution_reply += `${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
+          contribution_reply = `\n\n ----------------------- \n\n ${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
         }
 
         wekeza_reply = await setChatReply(
@@ -401,7 +619,6 @@ const replyMessage = async (
         source: 'whatsapp',
       });
     }
-
     if (wekeza_reply) {
       return sendMessage(wekeza_reply)
         .then((response) => {
