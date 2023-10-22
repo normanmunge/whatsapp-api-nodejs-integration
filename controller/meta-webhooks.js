@@ -18,9 +18,10 @@ class MetaWebhookController {
 
   async connectMetaWehbooks(req, res) {
     try {
+      const verify_token = process.env.VERIFY_TOKEN;
       if (
         req.query['hub.mode'] == 'subscribe' &&
-        req.query['hub.verify_token'] == MetaWebhookController.verify_token
+        req.query['hub.verify_token'] == verify_token
       ) {
         res.send(req.query['hub.challenge']);
       } else {
