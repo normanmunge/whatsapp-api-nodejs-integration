@@ -142,6 +142,7 @@ class MetaWebhookController {
           if (data) {
             await sendMessage(data)
               .then((response) => {
+                console.log('THE RESPONSE FROM META WEBHOOKS', response);
                 if (response.data?.success) {
                   user_reply_initiated = true;
                 }
@@ -169,7 +170,7 @@ class MetaWebhookController {
                   let chama_profile_text = setChamaProfileText();
                   switch (message_button_payload) {
                     case chama_profile_text:
-                      const profile = await replyMessage(
+                      await replyMessage(
                         message_types['chama_profile'],
                         user_reply_initiated,
                         message_from,
