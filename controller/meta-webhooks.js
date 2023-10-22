@@ -161,117 +161,117 @@ class MetaWebhookController {
         }
 
         //message sent to user
-        // if (user_reply_initiated && typeof value['messages'] !== 'undefined') {
-        //   const message = await value.messages[0];
-        //   const message_type = message.type;
-        //   const message_from = message.from; //user phone number;
+        if (user_reply_initiated && typeof value['messages'] !== 'undefined') {
+          const message = await value.messages[0];
+          const message_type = message.type;
+          const message_from = message.from; //user phone number;
 
-        //   //TODO: Store the logs for the customer journey i.e their most frequently selected option.
-        //   // console.log('THE MESSAGE IS:', message.button.payload);
-        //   if (typeof message === 'object') {
-        //     console.log('mss', message);
+          //TODO: Store the logs for the customer journey i.e their most frequently selected option.
+          // console.log('THE MESSAGE IS:', message.button.payload);
+          if (typeof message === 'object') {
+            console.log('mss', message);
 
-        //     let chama_profile_text = setChamaProfileText();
-        //     //if the message id is different, then it's a new request
-        //     //if (MetaWebhookController.cache_message_ids[0] !== message.id) {
-        //     if (typeof cache_message_ids[message.id] === 'undefined') {
-        //       switch (message_type) {
-        //         case 'button':
-        //           const message_button_payload = await message.button.payload;
-        //           switch (message_button_payload) {
-        //             case chama_profile_text:
-        //               const profile = await replyMessage(
-        //                 message_types['chama_profile'],
-        //                 user_reply_initiated,
-        //                 message_from,
-        //                 chama,
-        //                 chama_member
-        //               );
+            let chama_profile_text = setChamaProfileText();
+            //if the message id is different, then it's a new request
+            //if (MetaWebhookController.cache_message_ids[0] !== message.id) {
+            if (typeof cache_message_ids[message.id] === 'undefined') {
+              switch (message_type) {
+                case 'button':
+                  const message_button_payload = await message.button.payload;
+                  switch (message_button_payload) {
+                    case chama_profile_text:
+                      const profile = await replyMessage(
+                        message_types['chama_profile'],
+                        user_reply_initiated,
+                        message_from,
+                        chama,
+                        chama_member
+                      );
 
-        //               console.log('THE PROFILE RESPONSE RETURNED:', profile);
+                      console.log('THE PROFILE RESPONSE RETURNED:', profile);
 
-        //               break;
-        //             case 'Send Contribution':
-        //               /**
-        //                * Check next recipient
-        //                * Send Confirm phone number of next recipient
-        //                * If send, prompt STK push
-        //                * If no, give options and let user choose
-        //                */
-        //               await replyMessage(
-        //                 message_types['send_contrib'],
-        //                 user_reply_initiated,
-        //                 message_from
-        //               );
-        //               break;
-        //             case 'Stop promotions':
-        //               console.log('STOP THE PROMOTIONS MESSAGES');
-        //               break;
-        //             case 'Confirm':
-        //               await replyMessage(
-        //                 message_types['send_confirm_contrib'],
-        //                 user_reply_initiated,
-        //                 message_from
-        //               );
-        //               break;
-        //             default:
-        //               break;
-        //           }
-        //           break;
-        //         case 'text':
-        //           const checkIfUserRegistered = await getMemberDetails(
-        //             message_from
-        //           );
+                      break;
+                    case 'Send Contribution':
+                      /**
+                       * Check next recipient
+                       * Send Confirm phone number of next recipient
+                       * If send, prompt STK push
+                       * If no, give options and let user choose
+                       */
+                      await replyMessage(
+                        message_types['send_contrib'],
+                        user_reply_initiated,
+                        message_from
+                      );
+                      break;
+                    case 'Stop promotions':
+                      console.log('STOP THE PROMOTIONS MESSAGES');
+                      break;
+                    case 'Confirm':
+                      await replyMessage(
+                        message_types['send_confirm_contrib'],
+                        user_reply_initiated,
+                        message_from
+                      );
+                      break;
+                    default:
+                      break;
+                  }
+                  break;
+                case 'text':
+                  const checkIfUserRegistered = await getMemberDetails(
+                    message_from
+                  );
 
-        //           //User isn't registered in our chama.
-        //           if (!checkIfUserRegistered) {
-        //             console.log('User not registered');
-        //             await replyMessage(
-        //               message_types['register'],
-        //               user_reply_initiated,
-        //               message_from
-        //             );
-        //             //MetaWebhookController.cache_message_ids.unshift(message.id);
-        //             cache_message_ids[message.id] = message.id;
+                  //User isn't registered in our chama.
+                  if (!checkIfUserRegistered) {
+                    console.log('User not registered');
+                    await replyMessage(
+                      message_types['register'],
+                      user_reply_initiated,
+                      message_from
+                    );
+                    //MetaWebhookController.cache_message_ids.unshift(message.id);
+                    cache_message_ids[message.id] = message.id;
 
-        //             return res.end();
-        //           }
-        //           const data = getWekezaWelcomeMessage(
-        //             message_from,
-        //             'Welcome to Wekeza!'
-        //           );
-        //           //todo:// make send welcome message re-usable
-        //           await sendMessage(data)
-        //             .then((response) => {
-        //               const { contacts, messages } = response.data;
-        //               const user_reply_phone_number = contacts[0].wa_id;
-        //               const message_id = messages[0].id;
+                    return res.end();
+                  }
+                  const data = getWekezaWelcomeMessage(
+                    message_from,
+                    'Welcome to Wekeza!'
+                  );
+                  //todo:// make send welcome message re-usable
+                  await sendMessage(data)
+                    .then((response) => {
+                      const { contacts, messages } = response.data;
+                      const user_reply_phone_number = contacts[0].wa_id;
+                      const message_id = messages[0].id;
 
-        //               req.user_phone = user_reply_phone_number;
+                      req.user_phone = user_reply_phone_number;
 
-        //               getMessageId(
-        //                 message_id,
-        //                 user_reply_phone_number,
-        //                 'business'
-        //               );
-        //               return res.sendStatus(200);
-        //             })
-        //             .catch((err) => {
-        //               console.log('THE ERROR', err.response['data']);
-        //               return res.sendStatus(400);
-        //             });
+                      getMessageId(
+                        message_id,
+                        user_reply_phone_number,
+                        'business'
+                      );
+                      return res.sendStatus(200);
+                    })
+                    .catch((err) => {
+                      console.log('THE ERROR', err.response['data']);
+                      return res.sendStatus(400);
+                    });
 
-        //         //TODO: Store message detail logs:
-        //         default:
-        //           break;
-        //       }
-        //       //let's cache this webhook
-        //       cache_message_ids[message.id] = message.id;
-        //       //MetaWebhookController.cache_message_ids.unshift(message.id);
-        //     }
-        //   }
+                //TODO: Store message detail logs:
+                default:
+                  break;
+              }
+              //let's cache this webhook
+              cache_message_ids[message.id] = message.id;
+              //MetaWebhookController.cache_message_ids.unshift(message.id);
+            }
+          }
+        }
         // }
-        //}
       }
       return res.end();
     } catch (error) {
