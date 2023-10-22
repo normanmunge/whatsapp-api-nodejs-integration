@@ -181,7 +181,7 @@ const replyMessage = async (
         //Sets up the next chama cycle date:
 
         //const { chama_cycle_next_date, deadline_date } = await dateLogic(chama);
-        let contribution_reply = `Hey ${name} below is a breakdown of your chama: \n\n *_${details.name}_* \n\n The total chama contribution is \n KES ${total_contributions} \n Your individual total contribution is \n KES ${your_contributions} \n\n ----------------------- \n\n Next cycle recipient of your chama is ${next_recipient['name']} (+${next_recipient['phone_number']}).`;
+        let contribution_reply = `Hello ${name}, \n Here's your *_${details.name}_* update: \n\n Total Chama Contribution: \n KES ${total_contributions} \n Your Individual Contribution: \n KES ${your_contributions} \n\n  Next cycle recipient: ${next_recipient['name']} (+${next_recipient['phone_number']}). \n\n Stay connected and keep contributing!`;
 
         let paid_member_list_reply = '';
 
@@ -192,7 +192,7 @@ const replyMessage = async (
             } ✅ \n`;
           });
 
-          contribution_reply = `\n\n ----------------------- \n\n ${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
+          contribution_reply = `\n\n ${contribution_reply} \n _*List of paid members*_ \n ${paid_member_list_reply}`;
         }
 
         wekeza_reply = await setChatReply(
@@ -300,8 +300,7 @@ const replyMessage = async (
         });
       }
     } else {
-      //let's tell the user that we'll contact them.
-      const registration_reply = `Thanks for contacting us. We are yet to be register you in a chama 😔. That might be an issue on our end so our customer support will reach out to you in the next 24hours. You could also contact us directly through the number or by shooting us an email. Our contact details are on our Whatsapp profile. \n\n Thank you.`;
+      const registration_reply = `Thank you for reaching out to us! We can't wait to get you officially registered onto our platform! 😊 \n It seems there might be a small hiccup on our end, but no worries. Our customer support team will be in touch with you within the next 24 hours to resolve this. \n In the meantime, feel free to reach out to us directly through the phone number or by dropping us an email. You can find our contact details on our WhatsApp profile. \n Your journey with us is about to get even better. Thanks for choosing us!`;
       wekeza_reply = await setChatReply(
         registration_reply,
         user_reply_phone_number
@@ -318,7 +317,6 @@ const replyMessage = async (
     if (wekeza_reply) {
       return sendMessage(wekeza_reply)
         .then((response) => {
-          //console.log('THE WEKEZA WEBHOOK REPLY', response);
           if (response.status === 200) {
             return response.statusText;
           }

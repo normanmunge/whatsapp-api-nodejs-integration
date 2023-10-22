@@ -14,7 +14,7 @@ class Waitlist {
         phone: phone,
       });
       res.status(201).json({
-        data: `Happy to have you onboard! Our support team will reach out to you in the next few days.`,
+        data: `We're thrilled to have you on board! \n Keep an eye on your inbox – our support team will be in touch with you in the coming days. \n Get ready for an exciting journey ahead!`,
       });
     } catch (error) {
       console.log('ERROR JOINING LIST:', error);
