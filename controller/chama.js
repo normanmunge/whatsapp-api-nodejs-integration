@@ -50,33 +50,6 @@ class Chama {
       res.status(500).json({ error: error });
     }
   }
-
-  //members
-  //Firebase solution
-  async createChamaMember(req, res) {
-    try {
-      const data = req.body;
-      const memberRef = User.doc();
-      await memberRef.set(data);
-
-      res.status(201).json({ data: 'User added' });
-    } catch (error) {
-      console.log('ERROR CREATING MEMBER', error);
-      res.status(403).json({ error: error });
-      return;
-    }
-  }
-
-  async getChamaMembers(req, res) {
-    try {
-      const data = req.body;
-      //res.status(201).json()
-      res.send(getMemberDetails(data.phone));
-    } catch (error) {
-      console.log('ERROR GETTING MEMBERS', error);
-      res.status(500).json({ error: error });
-    }
-  }
 }
 
 module.exports = new Chama();
