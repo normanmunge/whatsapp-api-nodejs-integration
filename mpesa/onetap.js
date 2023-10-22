@@ -3,23 +3,57 @@ const router = express.Router();
 const body_parser = require('body-parser');
 require('dotenv').config();
 const needle = require('needle');
+const axios = require('axios');
 
 const { Chama, Reports, ChamaCycleCount } = require('../firebase/Chama');
 const { User, getMember } = require('../firebase/User');
-const { message_ids, sendMessage, setChatReply } = require('../messages');
+// const { message_ids } = require('../messages');
 const { triggerStkPush, header_options } = require('./methods');
+const { fetchChamaMemberByPhone } = require('../utils/member');
+const { fetchChama } = require('../utils/chama');
+const transactionService = require('../service/transactions');
 
 router.use(body_parser.json());
 
 const BANKWAVE_API_BASE_URL = process.env.BANKWAVE_DEV_BASE_URL;
 const MPESA_BASIC_AUTH = process.env.MPESA_DEV_BASIC_AUTH;
 
+const mpesa_confirmation = `The transaction unfortunately failed! If this is a mistake, kindly contact the Wekeza Administrator through dialing the business number on the Whatsapp Profile`;
+
+const setChatReply = (reply, user_reply_phone_number) => {
+  const chatreply = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: user_reply_phone_number,
+    type: 'text',
+    text: {
+      preview_url: false,
+      body: reply,
+    },
+  };
+  return chatreply;
+};
+
+const sendMessage = (data) => {
+  const config = {
+    method: 'POST',
+    url: `https://graph.facebook.com/${process.env.VERSION}/${process.env.PHONE_NUMBER_ID}/messages`,
+    headers: {
+      Authorization: `Bearer ${process.env.ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    data: data,
+  };
+
+  return axios(config);
+};
+
 const getChamaAccountNumber = async () => {
   const { phone } = message_ids[0];
   const member = await getMember(phone);
   const chama_member_snapshot = Chama.doc(member['chama']);
   const chama_doc = await chama_member_snapshot.get();
-  //const { onetap_account_no } = chama_doc.data();
+  //const { wekeza_account_no } = chama_doc.data();
   console.log('THE CHAMA DOC', chama_doc.data());
   return chama_doc.data();
 };
@@ -90,9 +124,11 @@ router.post('/create-chama-account/', generateAccessToken, async (req, res) => {
             const chamaRef = Chama.doc(member['chama']);
             //const chamaRef = Chama.doc('Zetd1Tcq7KQeAmSnEWmE');
 
-            await chamaRef.update({
-              onetap_account_no: account_number,
-            });
+            //TODO: UPDATE OUR POSTGRES DB:
+
+            // await chamaRef.update({
+            //   wekeza_account_no: account_number,
+            // });
             // const registrationRef = Reports.doc();
             // await registrationRef.set({
             //   name: name,
@@ -120,16 +156,16 @@ router.get(
   generateAccessToken,
   async (req, res) => {
     try {
-      const { onetap_account_no } = getChamaAccountNumber();
+      const { wekeza_account_no } = getChamaAccountNumber();
       console.log(
         'THE ACCOUNT NUMBER',
-        onetap_account_no,
+        wekeza_account_no,
         'THE HEADER OPTIONS',
         header_options
       );
 
       await needle.get(
-        `${BANKWAVE_API_BASE_URL}account/${onetap_account_no}/`,
+        `${BANKWAVE_API_BASE_URL}account/${wekeza_account_no}/`,
         header_options,
         (err, resp) => {
           console.log('RESPONSE', resp.body);
@@ -159,10 +195,10 @@ router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
     }
     if (chama && phone) {
       await triggerStkPush(chama, phone);
-      // const { onetap_account_no, contribution_amount } = chama;
+      // const { wekeza_account_no, contribution_amount } = chama;
       // const data = {
       //   callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
-      //   account: onetap_account_no,
+      //   account: wekeza_account_no,
       //   amount: contribution_amount,
       //   phone_number: phone,
       // };
@@ -212,13 +248,13 @@ router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
       // );
     }
 
-    // const { onetap_account_no, contribution_amount } =
+    // const { wekeza_account_no, contribution_amount } =
     //   await getChamaAccountNumber();
 
     // const { phone } = message_ids[0];
     // const data = {
     //   callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
-    //   account: onetap_account_no,
+    //   account: wekeza_account_no,
     //   amount: contribution_amount,
     //   phone_number: phone,
     // };
@@ -284,135 +320,161 @@ router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
     const { account_number } = account;
     //todo: update the chama member reports
     if (req.body.transaction_status === 'completed') {
-      const member = await getMember(req.body.phone_number);
+      // const member = await getMember(req.body.phone_number);
+      let chama = null;
+      const user_reply_phone_number = req.body.phone_number;
+      const member = await fetchChamaMemberByPhone(user_reply_phone_number);
       console.log('AUTOMATE THE SENDING TO RECIPIENT NOW 1', member);
+      if (member) {
+        const { chama_id, id } = member;
+        chama = await fetchChama(chama_id, id);
 
-      // const { onetap_account_no, contribution_amount, recipient_number } =
-      // await getChamaAccountNumber();
+        console.log('THE CHAMA', chama);
+        if (chama) {
+          const {
+            account,
+            amount,
+            transaction_type,
+            transaction_category,
+            transaction_status,
+            callback_url,
+            phone_number,
+            created_at,
+            updated_at,
+          } = req.body;
 
-      const data = {
-        callback_url: `${process.env.NGROK_DOMAIN}/send-money/callback/`,
-        account: account_number,
-        amount: amount,
-        receiver_phone_number: member['next_recipient_member']?.phone_number,
-      };
-      await needle.post(
-        `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
-        data,
-        header_options,
-        async (err, resp) => {
-          if (resp) {
-            console.log(
-              'the response to send money to next recipient using stk push:',
-              resp.body
-            );
-            //todo: change recipient number after cycle count complete or when admin triggers
-            //todo: save the stk debit transfer transactions to our DB
+          let response = {
+            chama_id: chama.id,
+            payment_gateway_id: 1, //TODO: //Change if the gateway changes
+            sender_id: member.id,
+            recipient_id: chama.next_recipient.id,
+            payment_gateway_response_id: req.body.id,
+            contribution_amount: amount,
+            transaction_type: transaction_type,
+            transaction_category: transaction_category,
+            transaction_status: transaction_status,
+            transaction_datetime: created_at,
+          };
 
-            //           {
-            // 	"data": {
-            // 		"id": "079545da-d6a9-4d0b-ac51-05b835eaf8b7",
-            // 		"account": {
-            // 			"account_name": "Norman Munge",
-            // 			"account_number": "534953"
-            // 		},
-            // 		"amount": 10,
-            // 		"transaction_type": "send-to-phone-number",
-            // 		"transaction_category": "debit",
-            // 		"transaction_status": "in_progress",
-            // 		"callback_url": "https://gentle-glowworm-sharing.ngrok-free.app/send-money/callback/",
-            // 		"receiver_phone_number": "254712658102",
-            // 		"created_at": "2023-10-14T07:48:22.958671Z",
-            // 		"updated_at": "2023-10-14T07:48:22.958711Z"
-            // 	}
-            // }
-            if (req.body.transaction_status === 'in_progress') {
-              const reply_to_user =
-                "Sending. We'll notify you when the transaction is done!";
-              const chat_reply = setChatReply(
-                reply_to_user,
-                req.body.phone_number
-              );
+          const reply_to_user = `Your contribution is underway! We'll let you know once it's completed. 🚀`;
+          const chat_reply = await setChatReply(
+            reply_to_user,
+            user_reply_phone_number
+          );
 
-              await sendMessage(chat_reply)
-                .then(async (response) => {
-                  console.log(
-                    'THE SEND MESSAGE MPESA IN PROGRESS WEBHOOK REPLY',
-                    response
-                  );
-                  if (response.status === 200) {
-                    const member = await getMember(receiver_phone_number);
-                    console.log(
-                      'THE SEND MESSAGE MPESA IN PROGRESS WEBHOOK REPLY 2',
-                      member
-                    );
+          return sendMessage(chat_reply)
+            .then(async () => {
+              const transaction =
+                await transactionService.createTransactionRecord(response);
 
-                    const reportsRef = Reports.doc();
+              if (transaction.id) {
+                const data = {
+                  callback_url: `${process.env.NGROK_DOMAIN}/send-money/callback/`,
+                  account: chama.wekeza_account_no,
+                  amount: chama.frequency.contribution_amount,
+                  receiver_phone_number: chama.next_recipient?.phone_number,
+                };
+                await needle.post(
+                  `${BANKWAVE_API_BASE_URL}transaction/send-to-phone-number/`,
+                  data,
+                  header_options,
+                  async (err, resp) => {
+                    if (resp) {
+                      console.log(
+                        'the response to send money to next recipient using stk push:',
+                        resp.body
+                      );
 
-                    await reportsRef.set({
-                      amount_received: amount,
-                      chama: member['chama'],
-                      date_of_payment: created_at,
-                      member: member['next_recipient_id'], //recipient,
-                      member_phone: receiver_phone_number,
-                    });
+                      const {
+                        transaction_category,
+                        transaction_status,
+                        updated_at,
+                      } = resp.body;
+                      //todo: change recipient number after cycle count complete or when admin triggers
+                      //todo: save the stk debit transfer transactions to our DB
 
-                    //update chama cycle count
-                    const total_chama_members = await User.where(
-                      'chama',
-                      '==',
-                      chama
-                    ).get();
+                      if (req.body.transaction_status === 'completed') {
+                        const reply_to_user = `Your contribution of id ${transaction.id} was sent to the recipient and is greatly appreciated 😊`;
+                        const chat_reply = await setChatReply(
+                          reply_to_user,
+                          req.body.phone_number
+                        );
 
-                    let next_recipient_cycle =
-                      cycle_count === total_chama_members.size
-                        ? 1
-                        : member['cycle_count'] + 1;
+                        await sendMessage(chat_reply)
+                          .then(async (response) => {
+                            if (response.status === 200) {
+                              const data = {
+                                transaction_category: transaction_category,
+                                transaction_status: transaction_status,
+                                updated_at: updated_at,
+                              };
 
-                    const chamaRef = Chama.doc(member['chama']);
-                    await chamaRef.update({
-                      current_cycle_count: next_recipient_cycle,
-                    });
+                              const transaction_complete =
+                                await transactionService.updateTransactionRecord(
+                                  transaction.id,
+                                  response
+                                );
 
-                    res.status(200).end();
-                  } else {
-                    mpesa_confirmation = 'Cash not sent!!!';
-                    res.status(400).end();
+                              if (transaction_complete) {
+                                //TODO: //Check if everyone has sent the cash to the recipient and update the cycle_count.
+                              }
+
+                              res.status(200).end();
+                            } else {
+                              const chat_reply = await setChatReply(
+                                mpesa_confirmation,
+                                req.body.phone_number
+                              );
+
+                              return sendMessage(chat_reply)
+                                .then((response) => {
+                                  //console.log('THE WEKEZA WEBHOOK REPLY', response);
+                                  if (response.status === 200) {
+                                    return res.status(200);
+                                  }
+                                })
+                                .catch((err) => {
+                                  console.log('THE ERROR:', err);
+                                });
+                            }
+                          })
+                          .catch((error) => {
+                            res.status(400).end();
+                          });
+                      }
+
+                      res.status(200).end();
+                    } else {
+                      console.log('the error', err);
+                      res.status(400).end();
+                    }
                   }
-                })
-                .catch((error) => {
-                  res.status(400).end();
-                });
-            }
-
-            res.sendStatus(200);
-          } else {
-            console.log('the error', err);
-            res.sendStatus(400);
-          }
+                );
+              }
+            })
+            .catch((err) => {
+              //TODO: Configure error-handling messages
+              console.log('THE ERROR - SENDING MESSAGE:', err);
+            });
         }
-      );
+      }
     } else {
-      const mpesa_confirmation =
-        'Failed! Kindly contact the Wekeza Administrator';
-      console.log('Failed', mpesa_confirmation);
-      // const chat_reply = setChatReply(
-      //   mpesa_confirmation,
-      //   req.body.phone_number
-      // );
+      const chat_reply = await setChatReply(
+        mpesa_confirmation,
+        req.body.phone_number
+      );
 
-      // await sendMessage(chat_reply)
-      //   .then((response) => {
-      //     //console.log('THE WEKEZA WEBHOOK REPLY', response);
-      //     if (response.status === 200) {
-      //       return res.status(200).json({ data: resp.body });
-      //     }
-      //   })
-      //   .catch((err) => {
-      //     console.log('THE ERROR:', err);
-      //   });
+      return sendMessage(chat_reply)
+        .then((response) => {
+          //console.log('THE WEKEZA WEBHOOK REPLY', response);
+          if (response.status === 200) {
+            return res.status(200);
+          }
+        })
+        .catch((err) => {
+          console.log('THE ERROR:', err);
+        });
     }
-    return res.end();
   } catch (error) {
     console.log('THE STK CALLBACK ERROR:', error);
     return res.status(400).end();
@@ -420,12 +482,12 @@ router.post('/stk-push/callback/', generateAccessToken, async (req, res) => {
 });
 
 router.post('/send-to-phonenumber/', generateAccessToken, async (req, res) => {
-  const { onetap_account_no, contribution_amount, recipient_number } =
+  const { wekeza_account_no, contribution_amount, recipient_number } =
     await getChamaAccountNumber();
 
   const data = {
     callback_url: `https://${process.env.NGROK_DOMAIN}/send-money/callback/`,
-    account: onetap_account_no,
+    account: wekeza_account_no,
     amount: contribution_amount,
     receiver_phone_number: recipient_number,
   };
@@ -477,12 +539,12 @@ router.post('/send-money/callback/', async (req, res) => {
 
     if (req.body.transaction_status === 'completed') {
       console.log('SENT SUCCESSFULLY', mpesa_confirmation);
-      const chat_reply = setChatReply(
+      const chat_reply = await setChatReply(
         mpesa_confirmation,
         req.body.phone_number
       );
       console.log('GETS HERE TO SEND CONFIRMATION REPORT', chat_reply);
-      await sendMessage(chat_reply)
+      return sendMessage(chat_reply)
         .then(async (response) => {
           console.log('THE SEND MESSAGE BANKWAVE WEBHOOK REPLY', response);
           if (response.status === 200) {
@@ -508,7 +570,6 @@ router.post('/send-money/callback/', async (req, res) => {
           res.status(400).end();
         });
     }
-    return res.end();
   } catch (error) {
     return res.status(400).json({ error: error }).end();
   }

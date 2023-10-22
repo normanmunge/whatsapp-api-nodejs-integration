@@ -8,13 +8,11 @@ const verify_token = process.env.VERIFY_TOKEN;
 router.use(body_parser.json());
 
 router.post('/responses', (req, res) => {
-  console.log('THE REQUEST', verify_token);
   if (req.query.token !== verify_token) {
     return res.sendStatus(401); //unauthorized
   }
 
   res.sendStatus(201);
-  console.log('THE REQUEST NOW', req.body);
   return;
 });
 

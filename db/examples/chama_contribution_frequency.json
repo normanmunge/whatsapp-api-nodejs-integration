@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "chama_id": 1,
+    "contribution_amount": 1,
+    "frequency": "daily",
+    "deadline_day": 3,
+    "extension_period": 1
+  },
+  {
+    "id": 2,
+    "chama_id": 2,
+    "contribution_amount": 300,
+    "frequency": "daily",
+    "deadline_day": 3,
+    "extension_period": 1
+  }
+]

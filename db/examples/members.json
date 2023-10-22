@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "chama_id": 1,
+    "name": "Norman Munge",
+    "phone_number": "254712658102",
+    "password": "",
+    "alternate_phone_number": "",
+    "whatsapp_opt_in": true,
+    "is_official": true,
+    "type": "administrator"
+  },
+  {
+    "id": 2,
+    "chama_id": 1,
+    "name": "James Muriithi",
+    "phone_number": "254726333555",
+    "password": "",
+    "alternate_phone_number": "",
+    "whatsapp_opt_in": true,
+    "is_official": false,
+    "type": "member"
+  }
+]
