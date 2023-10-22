@@ -139,18 +139,39 @@ exports.up = function (knex) {
       table.string('transaction_status', 255).notNullable();
       table.datetime('transaction_datetime').notNullable();
       table.timestamps(true, true);
+    })
+    .createTable('member_paid', (table) => {
+      table.increments();
+      table.integer('chama_id').unsigned().notNullable();
+      table
+        .foreign('chama_id')
+        .references('id')
+        .inTable('chama')
+        .onDelete('CASCADE')
+        .onUpdate('CASCADE');
+      table.integer('member_id').unsigned().notNullable();
+      table
+        .foreign('member_id')
+        .references('id')
+        .inTable('members')
+        .onDelete('CASCADE')
+        .onUpdate('CASCADE');
+      table.integer('payment_transaction_id').unsigned().notNullable();
+      table
+        .foreign('payment_transaction_id')
+        .references('id')
+        .inTable('payment_transactions')
+        .onDelete('CASCADE')
+        .onUpdate('CASCADE');
+      table.integer('chama_cycle_count_id').unsigned().notNullable();
+      table
+        .foreign('chama_cycle_count_id')
+        .references('id')
+        .inTable('chama_cycle_count')
+        .onDelete('CASCADE')
+        .onUpdate('CASCADE');
+      table.timestamps(true, true);
     });
-  // .createTable('chama_reports', (table) => {
-  //   table.increments('report_id').primary();
-  //   table.integer('sender_id').unsigned().notNullable();
-  //   table
-  //     .foreign('sender_id')
-  //     .references('sender_id')
-  //     .inTable('payment_transactions')
-  //     .onDelete('CASCADE')
-  //     .onUpdate('CASCADE');
-  //   table.timestamps(true, true);
-  // });
 };
 
 /**
@@ -159,7 +180,6 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return knex.schema
-    .dropTable('chama_reports')
     .dropTable('payment_transactions')
     .dropTable('payment_gateway')
     .dropTable('member_cycle_count')
