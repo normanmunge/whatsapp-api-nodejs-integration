@@ -17,6 +17,14 @@ class TransactionService {
   fetchCurrentChamaPaidMembers(id, member) {
     return transactions.fetchCurrentChamaPaidMembers(id, member);
   }
+
+  createTransactionRecord(data) {
+    return transactions.createTransaction(data);
+  }
+
+  updateTransactionRecord(id, data) {
+    return transactions.updateTransaction(id, data);
+  }
 }
 
 module.exports = new TransactionService();
