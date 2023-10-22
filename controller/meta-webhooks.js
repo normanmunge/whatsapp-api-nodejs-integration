@@ -87,8 +87,8 @@ class MetaWebhookController {
               user_reply_phone_number
             );
             if (chama_member) {
-              const { chama_id } = chama_member;
-              chama = await fetchChama(chama_id);
+              const { chama_id, id } = chama_member;
+              chama = await fetchChama(chama_id, id);
             }
 
             //total_chama_contributions,
@@ -101,7 +101,7 @@ class MetaWebhookController {
             console.log('THE ERROR TO GET MEMBER', error);
           }
 
-          console.log('THE CHAMA NOW:', chama);
+          // console.log('THE CHAMA NOW:', chama);
           //TODO: Store the client details to our database.
 
           //client message details
