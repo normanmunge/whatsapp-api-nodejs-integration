@@ -14,7 +14,6 @@ const checkEnvironment = () => {
   }
 };
 const setChamaProfileText = () => {
-  console.log('THE ENVIRONMENT IS:', ENV);
   let chama_profile_text =
     checkEnvironment() === 'development'
       ? 'Your Chama Profile'

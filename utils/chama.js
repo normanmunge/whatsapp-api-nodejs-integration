@@ -46,7 +46,6 @@ class MemberUtility {
         let list = members.filter((i) => i.id !== current_member_id);
         paid_members = list.filter((i) => {
           return current_cycle_paid_members.filter((x) => {
-            console.log('GETS HERE?', i, 'AND...', x);
             return i.id !== x.sender_id;
           });
         });

@@ -8,11 +8,11 @@ let header_options = {
 };
 
 const triggerStkPush = async (chama, phone) => {
-  const { onetap_account_no, contribution_amount } = chama;
+  const { wekeza_account_no, contribution_amount } = chama;
 
   const data = {
     callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
-    account: onetap_account_no,
+    account: wekeza_account_no,
     amount: contribution_amount,
     phone_number: phone,
   };
