@@ -14,7 +14,6 @@ const welcomeRouter = require('./welcome');
 const bankwaveRouter = require('../mpesa/onetap');
 
 router.get('/test', (req, res) => {
-  console.log('THE PROCESS ENV', process.env.RECIPIENT_WAID);
   res.sendStatus(200);
   return;
 });
