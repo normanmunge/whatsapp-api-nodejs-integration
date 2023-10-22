@@ -207,7 +207,7 @@ const replyMessage = async (
             next_recipient
           );
 
-          let loading_message = `Just a second. We're retrieving the details of the next recipient for your confirmation`;
+          let loading_message = `Just a second. We're retrieving the details of the next recipient for your confirmation and will generate an Mpesa prompt swiftly.`;
           const reply = await setChatReply(
             loading_message,
             user_reply_phone_number
