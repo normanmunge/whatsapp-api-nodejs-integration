@@ -90,13 +90,6 @@ class MetaWebhookController {
               const { chama_id, id } = chama_member;
               chama = await fetchChama(chama_id, id);
             }
-
-            //total_chama_contributions,
-            //ind_total_chama_contributions,
-            //next_recipient_member - done,
-            //chama_cycle_next_date - done
-            //deadline_date - done
-            //list of other members - done;
           } catch (error) {
             console.log('THE ERROR TO GET MEMBER', error);
           }
@@ -121,16 +114,16 @@ class MetaWebhookController {
               break;
           }
 
-          console.log(
-            'THE MESSAGE DETAILS: TIME',
-            message_time,
-            '& THE TYPE',
-            message_type,
-            '& THE MESSAGE ID',
-            message_id,
-            '& THE MESSAGE TEXT',
-            message_text
-          );
+          // console.log(
+          //   'THE MESSAGE DETAILS: TIME',
+          //   message_time,
+          //   '& THE TYPE',
+          //   message_type,
+          //   '& THE MESSAGE ID',
+          //   message_id,
+          //   '& THE MESSAGE TEXT',
+          //   message_text
+          // );
 
           //TODO: Store the user message details to our logs, utilize getMessageId function ie phone, name, message_time, message_type, message_id, message_text
           //After storing the logo, mark message as read
@@ -169,15 +162,11 @@ class MetaWebhookController {
           //TODO: Store the logs for the customer journey i.e their most frequently selected option.
           // console.log('THE MESSAGE IS:', message.button.payload);
           if (typeof message === 'object') {
-            console.log('mss', message);
-
-            let chama_profile_text = setChamaProfileText();
-            //if the message id is different, then it's a new request
-            //if (MetaWebhookController.cache_message_ids[0] !== message.id) {
             if (typeof cache_message_ids[message.id] === 'undefined') {
               switch (message_type) {
                 case 'button':
                   const message_button_payload = await message.button.payload;
+                  let chama_profile_text = setChamaProfileText();
                   switch (message_button_payload) {
                     case chama_profile_text:
                       const profile = await replyMessage(
@@ -187,8 +176,6 @@ class MetaWebhookController {
                         chama,
                         chama_member
                       );
-
-                      console.log('THE PROFILE RESPONSE RETURNED:', profile);
 
                       break;
                     case 'Send Contribution':
@@ -201,7 +188,9 @@ class MetaWebhookController {
                       await replyMessage(
                         message_types['send_contrib'],
                         user_reply_initiated,
-                        message_from
+                        message_from,
+                        chama,
+                        chama_member
                       );
                       break;
                     case 'Stop promotions':
@@ -211,7 +200,9 @@ class MetaWebhookController {
                       await replyMessage(
                         message_types['send_confirm_contrib'],
                         user_reply_initiated,
-                        message_from
+                        message_from,
+                        chama,
+                        chama_member
                       );
                       break;
                     default:
@@ -229,7 +220,8 @@ class MetaWebhookController {
                     await replyMessage(
                       message_types['register'],
                       user_reply_initiated,
-                      message_from
+                      message_from,
+                      send_confirm_contrib
                     );
                     //MetaWebhookController.cache_message_ids.unshift(message.id);
                     cache_message_ids[message.id] = message.id;
