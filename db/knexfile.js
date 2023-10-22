@@ -2,7 +2,6 @@
 const { join } = require('path');
 require('dotenv').config({ path: join(__dirname, '..', '.env') });
 
-console.log('THE DB SELECTED IS:', process.env.PG_DB);
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */

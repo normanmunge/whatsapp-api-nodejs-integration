@@ -29,6 +29,20 @@ class TransactionsDataLayer {
 
     return paid_members_rows;
   }
+
+  async createTransaction(data) {
+    const [id] = await db('payment_transactions').insert(data).returning('id');
+
+    return id;
+  }
+
+  async updateTransaction(uid, data) {
+    const [id] = await db('payment_transactions')
+      .where('id', uid)
+      .update(data)
+      .returning('id');
+    return id;
+  }
 }
 
 module.exports = new TransactionsDataLayer();

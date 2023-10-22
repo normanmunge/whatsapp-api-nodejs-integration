@@ -14,7 +14,7 @@ exports.seed = async function (knex) {
     {
       id: 1,
       chama_id: 1,
-      contribution_amount: 1,
+      contribution_amount: 10,
       frequency: 'daily',
       deadline_day: 3,
       extension_period: 1,
