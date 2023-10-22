@@ -14,8 +14,8 @@ class TransactionService {
     return;
   }
 
-  fetchCurrentChamaPaidMembers(id, start_date, end_date) {
-    return;
+  fetchCurrentChamaPaidMembers(id, member) {
+    return transactions.fetchCurrentChamaPaidMembers(id, member);
   }
 }
 

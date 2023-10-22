@@ -6,7 +6,7 @@ const transactionService = require('../service/transactions');
 class MemberUtility {
   constructor() {}
 
-  async fetchChama(id) {
+  async fetchChama(id, current_member_id) {
     return await chamaService.getChama(id).then(async (data) => {
       const { id, current_cycle_count } = data;
       const contrib_frequency =
@@ -30,7 +30,27 @@ class MemberUtility {
       let total_contributions =
         await transactionService.sumTotalChamaTransactions(id);
       let your_contributions =
-        await transactionService.sumMemberChamaTransactions(id, member_id);
+        await transactionService.sumMemberChamaTransactions(
+          id,
+          current_member_id
+        );
+
+      let current_cycle_paid_members =
+        await transactionService.fetchCurrentChamaPaidMembers(
+          id,
+          current_member_id
+        );
+
+      let paid_members = null;
+      if (current_cycle_paid_members.length) {
+        let list = members.filter((i) => i.id !== current_member_id);
+        paid_members = list.filter((i) => {
+          return current_cycle_paid_members.filter((x) => {
+            console.log('GETS HERE?', i, 'AND...', x);
+            return i.id !== x.sender_id;
+          });
+        });
+      }
 
       //   const date = new Date();
       //   const months_of_the_year = [
@@ -63,6 +83,7 @@ class MemberUtility {
         members: members,
         total_contributions: total_contributions[0].sum,
         your_contributions: your_contributions[0].sum,
+        paid_members: paid_members,
       };
       return Object.assign(data, extra_details);
     });
