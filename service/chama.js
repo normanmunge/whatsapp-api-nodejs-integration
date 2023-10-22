@@ -8,6 +8,14 @@ class ChamaService {
   getChama(id) {
     return chama.getChama(id);
   }
+
+  getChamaContributionFrequency(id) {
+    return chama.getChamaContributionFrequency(id);
+  }
+
+  getChamaNextRecipient(id, cycle_count) {
+    return chama.getChamaNextRecipient(id, cycle_count);
+  }
 }
 
 module.exports = new ChamaService();
