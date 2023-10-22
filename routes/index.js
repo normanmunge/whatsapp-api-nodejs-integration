@@ -41,15 +41,18 @@ router.post('/webhooks', postMetaWebhooks);
 
 //ENDPOINTS
 const chamaController = require('../controller/chama');
-const { createChamaMember, getChamaMembers, getChama, createChama } =
-  chamaController;
+const { getChama, createChama } = chamaController;
 //Chama
 router.post('/create-chama', createChama);
 router.get('/get-chama/:id', getChama);
 
 //Members
+const memberController = require('../controller/member');
+const { createChamaMember, listChamaMembers, getChamaMember } =
+  memberController;
 router.post('/create-chama-member', createChamaMember);
-router.get('/chama-members', getChamaMembers);
+router.get('/get-chama-member/:id', getChamaMember);
+router.get('/get-chama-members', listChamaMembers);
 
 const waitlistController = require('../controller/waitlist');
 const { joinList } = waitlistController;
