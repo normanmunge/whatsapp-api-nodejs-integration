@@ -19,6 +19,12 @@ class MetaWebhookController {
   async connectMetaWehbooks(req, res) {
     try {
       const verify_token = process.env.VERIFY_TOKEN;
+      console.log(
+        'THE VERIFY TOKEN IS:',
+        verify_token,
+        'AND THE META QUERY',
+        req.query
+      );
       if (
         req.query['hub.mode'] == 'subscribe' &&
         req.query['hub.verify_token'] == verify_token
