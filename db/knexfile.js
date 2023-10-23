@@ -14,6 +14,7 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
+      ssl: true,
     },
     pool: {
       min: 2,
@@ -58,6 +59,7 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
+      ssl: true,
     },
     pool: {
       min: 2,
