@@ -18,11 +18,18 @@ class MetaWebhookController {
 
   async connectMetaWehbooks(req, res) {
     try {
+      const verify_token = process.env.VERIFY_TOKEN;
+      console.log(
+        'THE VERIFY TOKEN IS:',
+        verify_token,
+        'AND THE META QUERY',
+        req.query
+      );
       if (
-        req.query['hub.mode'] == 'subscribe' &&
-        req.query['hub.verify_token'] == MetaWebhookController.verify_token
+        req.query['hub.mode'] === 'subscribe' &&
+        req.query['hub.verify_token'] === verify_token
       ) {
-        res.send(req.query['hub.challenge']);
+        res.send('Verified');
       } else {
         res.sendStatus(400);
       }
@@ -47,7 +54,7 @@ class MetaWebhookController {
 
       //Initialise member;
       let chama_member = null;
-      let chama = null;
+      let type_of_chama = null;
 
       //Cache webhooks
       let cache_message_ids = {};
@@ -73,6 +80,21 @@ class MetaWebhookController {
         const { value } = changes[0];
         let user_reply_initiated = false;
 
+        const getChamaMember = async (user_reply_phone_number) => {
+          try {
+            chama_member = await fetchChamaMemberByPhone(
+              user_reply_phone_number
+            );
+            if (chama_member) {
+              const { chama_id, id } = chama_member;
+              type_of_chama = await fetchChama(chama_id, id);
+              return { type_of_chama, chama_member };
+            }
+          } catch (error) {
+            console.log('THE ERROR TO GET MEMBER');
+          }
+        };
+
         //message received from user
         if (typeof value['contacts'] !== 'undefined' && value.contacts.length) {
           //client profile details
@@ -80,6 +102,9 @@ class MetaWebhookController {
           const user_reply_name = profile.name;
           const user_reply_phone_number = wa_id;
 
+          const { type_of_chama, chama_member } = getChamaMember(
+            user_reply_phone_number
+          );
           //TODO: Get the user details from our Database:
           //1. Their chama details and member profile,
           try {
@@ -91,7 +116,7 @@ class MetaWebhookController {
               chama = await fetchChama(chama_id, id);
             }
           } catch (error) {
-            console.log('THE ERROR TO GET MEMBER', error);
+            console.log('THE ERROR TO GET MEMBER');
           }
 
           // console.log('THE CHAMA NOW:', chama);
@@ -147,7 +172,7 @@ class MetaWebhookController {
                 }
               })
               .catch((err) => {
-                console.log('THE ERROR:', err);
+                console.log('THE ERROR:');
                 res.end();
               });
           }
@@ -159,23 +184,27 @@ class MetaWebhookController {
           const message_type = message.type;
           const message_from = message.from; //user phone number;
 
+          const { type_of_chama, chama_member } = getChamaMember(message_from);
           //TODO: Store the logs for the customer journey i.e their most frequently selected option.
           // console.log('THE MESSAGE IS:', message.button.payload);
           if (typeof message === 'object') {
             if (typeof cache_message_ids[message.id] === 'undefined') {
+              const message_to_send = async (type) => {
+                return await replyMessage(
+                  message_types[type],
+                  user_reply_initiated,
+                  message_from,
+                  type_of_chama,
+                  chama_member
+                );
+              };
               switch (message_type) {
                 case 'button':
                   const message_button_payload = await message.button.payload;
                   let chama_profile_text = setChamaProfileText();
                   switch (message_button_payload) {
                     case chama_profile_text:
-                      const profile = await replyMessage(
-                        message_types['chama_profile'],
-                        user_reply_initiated,
-                        message_from,
-                        chama,
-                        chama_member
-                      );
+                      return await message_to_send('chama_profile');
 
                       break;
                     case 'Send Contribution':
@@ -185,47 +214,31 @@ class MetaWebhookController {
                        * If send, prompt STK push
                        * If no, give options and let user choose
                        */
-                      await replyMessage(
-                        message_types['send_contrib'],
-                        user_reply_initiated,
-                        message_from,
-                        chama,
-                        chama_member
-                      );
+                      return await message_to_send('send_contrib');
                       break;
                     case 'Stop promotions':
                       console.log('STOP THE PROMOTIONS MESSAGES');
                       break;
                     case 'Confirm':
-                      await replyMessage(
-                        message_types['send_confirm_contrib'],
-                        user_reply_initiated,
-                        message_from,
-                        chama,
-                        chama_member
-                      );
+                      return await message_to_send('send_confirm_contrib');
                       break;
                     default:
                       break;
                   }
                   break;
                 case 'text':
-                  const checkIfUserRegistered = await getMemberDetails(
-                    message_from
-                  );
+                  const checkIfUserRegistered = chama_member;
+
+                  console.log('THE CHAMA MEMBER', checkIfUserRegistered);
 
                   //User isn't registered in our chama.
                   if (!checkIfUserRegistered) {
-                    console.log('User not registered');
-                    await replyMessage(
-                      message_types['register'],
-                      user_reply_initiated,
-                      message_from,
-                      send_confirm_contrib
-                    );
-                    //MetaWebhookController.cache_message_ids.unshift(message.id);
-                    cache_message_ids[message.id] = message.id;
+                    const message = await message_to_send('register');
+                    console.log('User not registered', message);
 
+                    if (message) {
+                      cache_message_ids[message.id] = message.id;
+                    }
                     return res.end();
                   }
                   const data = getWekezaWelcomeMessage(
@@ -267,6 +280,7 @@ class MetaWebhookController {
       }
       return res.end();
     } catch (error) {
+      console.log('IS THERE AN ERROR:', error);
       return res.sendStatus(500);
     }
   }

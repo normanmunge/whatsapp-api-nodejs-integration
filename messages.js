@@ -159,10 +159,15 @@ const replyMessage = async (
 ) => {
   if (user_reply_initiated) {
     //POSTGRES
-    const chama_member = { member: member };
-    const details = Object.assign(chama, chama_member);
-
+    console.log('the chama member', chama, member);
     let wekeza_reply = null;
+    let details;
+
+    if (typeof chama !== 'undefined' || typeof member !== 'undefined') {
+      const chama_member = { member: member };
+      details = Object.assign(chama, chama_member);
+    }
+
     if (typeof details === 'object') {
       const {
         member,
@@ -300,19 +305,29 @@ const replyMessage = async (
         });
       }
     } else {
-      const registration_reply = `Thank you for reaching out to us! We can't wait to get you officially registered onto our platform! 😊 \n It seems there might be a small hiccup on our end, but no worries. Our customer support team will be in touch with you within the next 24 hours to resolve this. \n In the meantime, feel free to reach out to us directly through the phone number or by dropping us an email. You can find our contact details on our WhatsApp profile. \n Your journey with us is about to get even better. Thanks for choosing us!`;
+      const registration_reply = `Thank you for reaching out to us! We can't wait to get you officially registered onto our platform! 😊 \n Our customer support team will be in touch with you soon. \n In the meantime, feel free to reach out to us directly through the phone number or by dropping us an email. You can find our contact details on our WhatsApp profile. \n Your journey with us is about to get even better. Thanks for choosing us!`;
       wekeza_reply = await setChatReply(
         registration_reply,
         user_reply_phone_number
       );
 
-      const registrationRef = Joinlist.doc();
-      await registrationRef.set({
-        name: null,
-        email: null,
-        phone: user_reply_phone_number,
-        source: 'whatsapp',
-      });
+      //todo check if the phone number is already registered
+      const user_snapshot = await Joinlist.where(
+        'phone',
+        '==',
+        user_reply_phone_number
+      ).get();
+
+      if (!user_snapshot.size > 0) {
+        console.log('THE USER IS ALREADY REGISTERED');
+        const registrationRef = Joinlist.doc();
+        await registrationRef.set({
+          name: null,
+          email: null,
+          phone: user_reply_phone_number,
+          source: 'whatsapp',
+        });
+      }
     }
     if (wekeza_reply) {
       return sendMessage(wekeza_reply)

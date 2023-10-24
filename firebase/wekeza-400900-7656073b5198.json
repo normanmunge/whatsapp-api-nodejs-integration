@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "wekeza-400900",
+  "private_key_id": "7656073b51981a5f0126c6e8f21e9d1f08d97dbc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDUwHC5QLen8t5I\nqcaePlMSpQHt3sIfL1AAstfYBIyyo0UaHTT4W7guth82FqUc9TLq2xKGpB6wXsrN\ndmx4MxmXIDRsNkMIKwlFX/wGpRW3Z/mmOCUP1oTdem2fpGP7GNGP54lAp1CSJHjb\nDuwZfkGBS03aiCVwLDiM1zlv/S+RNZwRrPCkdMpSPGGuHhnqbkRb3h5yosaEjqBk\nixcm5J9iENFl2nvhbBRYniyJ0Y7nAg5yaUnUXeNGH9BQrYrvpnKBoizj5xb8ESDe\nIBe87b/UW4ZvUlrPFcbwsuLptN5wAshXUmOXFnEQAVp3DK3W8OOk+EZ/51iVNdRq\nrsWuwhODAgMBAAECggEAA06BmGkbsaRbtUnP1XiaHLysNmdAIYrAHCxFBvPjJlYI\nf+rOS1t//FhGTRy2MKhuKl2A5zWfAhZaSC4I0SfYkPm/w6LNERzVUw4cqHnH+zn5\neygXCcaUYBQQ2h2/x0Ppr4Pli55OHHqTcLKSegvCHUe8JdZerP4/wfVvMudlGUU/\nXiELnt1BWObLxPWeYExrSpMY86803QwcJPKhwbtG7CD/6XTps4V4WgHbQ1PczHK0\nYZuiCPznFBShMcz3G+gH29vGlSNsnzvaYjyuPgca7SnmX5R+CIZ4gN5TAkq4/HES\nYf5yQWnCSL7YDbYO/4kDl1xv+WGwR+YzibRqOI45aQKBgQD44bOB2QFYhnI8sS1Z\nBIEXuHfcSqZX2XNzMXWcso8kWZD48ig7sC+aajGyTkvbA//xsKUi19kFwza9ncWF\nawP85vbzVbR9ZjSur8g5wJzyETLb5wXMhqt/eJCY4rm7pCWkoXm36njNa5n93jEG\nEbbhsBu3q0/iKCx/ibh1/TQs7QKBgQDa1jKYyeyHuPRZbPv6krBOUUTmoMiSZLEE\n0nr8zQsTIkE0eR5hqQZsSkGIj+LDCfzterz0HOfFL/Im8rPrXL1CaXNeuRJwtI3g\nlzrx3QOB8f/RA+9CrgZlMPOfrMW8HSC9Z4atBDli3+Kpg5FWCn0hRyNlzzKQnflW\ngsb69D6kLwKBgQDu4AJg4J2wD+rZYdz6kZ4t3Dn+0A90RhvPNmuCKMfGxciliBch\nousttDtavleEMQSZP0hgdvev1jxWJnYMpjg/ppbj2yDPMyfheoodFEgO9n7wHX6t\nXZyBToDKnOJTvSr8Jpgi9ANadqpoxbgb8Sis2VDhKqYTlSeQiejoJkzLyQKBgQC9\n9AXxV/0nhmUbpp1G0MOXB7YuFsxjPmHl1KoK/BSr5CUDXkr/7I71urMNzg/Ays+w\nd8TChMCuCkNAiZWhLFvf5NbPFwipqiApHjx9KyJbTmuGy8qIb7R/a7FdHcR52DLO\nFanyTuNdLwd5qwmhzPL2yuAwBF1Y6LdA373GofIp4wKBgAx4HXBByEXx37CowRQ4\nhtJi1wpNUXMBKWxJGwsecesXmCTfWIjbuHbOCQUppfZoZeAE8tGmROjUVY8RbI5V\nhwXMZNjPbxw33CQ7XOg9HAOI7vfF/knqoTDddRwpBCq71DL8/m/BtKHqzwvJ31Bw\nqoNrfYD6SAr1KnCc4Plk6D9P\n-----END PRIVATE KEY-----\n",
+  "client_email": "wekeza-chama@wekeza-400900.iam.gserviceaccount.com",
+  "client_id": "104835859806842135053",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/wekeza-chama%40wekeza-400900.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

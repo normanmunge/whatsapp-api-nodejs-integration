@@ -1,10 +1,31 @@
 // Update with your config settings.
 const { join } = require('path');
-require('dotenv').config({ path: join(__dirname, '..', '.env') });
+const { checkEnvironment } = require('../utils/utils');
+const environment = checkEnvironment();
+const PATH = environment === 'production' ? '.env' : '.env.dev';
+
+console.log('THE IDENTIFIED PATH:', PATH);
+
+require('dotenv').config({
+  // path: join(__dirname, '..', PATH),
+  path: join(__dirname, '..', PATH),
+});
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
+
+console.log(
+  'THE ENVIRONMENT FOR KNEX DB:',
+  environment,
+  'AND THE DB NAME IS:',
+  process.env.PG_DB,
+  'ON HOST'
+);
+const ssl = {};
+const serverSupportSSL =
+  environment === 'production' ? (ssl['rejectUnauthorized'] = false) : false;
+
 module.exports = {
   development: {
     client: 'pg',
@@ -14,6 +35,7 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
+      ssl: serverSupportSSL,
     },
     pool: {
       min: 2,
@@ -37,6 +59,7 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
+      ssl: serverSupportSSL,
     },
     pool: {
       min: 2,
@@ -58,6 +81,7 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
+      ssl: serverSupportSSL,
     },
     pool: {
       min: 2,
