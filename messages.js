@@ -305,7 +305,7 @@ const replyMessage = async (
         });
       }
     } else {
-      const registration_reply = `Thank you for reaching out to us! We can't wait to get you officially registered onto our platform! 😊 \n Our customer support team will be in touch with you soon. \n In the meantime, feel free to reach out to us directly through the phone number or by dropping us an email. You can find our contact details on our WhatsApp profile. \n Your journey with us is about to get even better. Thanks for choosing us!`;
+      const registration_reply = `Thank you for reaching out to us! \n\n We can't wait to get you officially registered onto our platform! 😊 \n\n Our customer support team will be in touch with you soon. In the meantime, feel free to reach out to us directly through the phone number or by dropping us an email. You can find our contact details on our WhatsApp profile. \n\n Your journey with us is about to get even better. Thanks for choosing Wekezafrica!`;
       wekeza_reply = await setChatReply(
         registration_reply,
         user_reply_phone_number
@@ -319,7 +319,7 @@ const replyMessage = async (
       ).get();
 
       if (!user_snapshot.size > 0) {
-        console.log('THE USER IS ALREADY REGISTERED');
+        console.log('THE USER IS NOT REGISTERED');
         const registrationRef = Joinlist.doc();
         await registrationRef.set({
           name: null,
