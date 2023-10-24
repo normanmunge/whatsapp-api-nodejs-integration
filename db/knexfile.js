@@ -8,7 +8,7 @@ console.log('THE IDENTIFIED PATH:', PATH);
 
 require('dotenv').config({
   // path: join(__dirname, '..', PATH),
-  path: join(__dirname, '..', '.env.dev'),
+  path: join(__dirname, '..', PATH),
 });
 
 /**
