@@ -159,10 +159,15 @@ const replyMessage = async (
 ) => {
   if (user_reply_initiated) {
     //POSTGRES
-    const chama_member = { member: member };
-    const details = Object.assign(chama, chama_member);
-
+    console.log('the chama member', chama, member);
     let wekeza_reply = null;
+    let details;
+
+    if (typeof chama !== 'undefined' || typeof member !== 'undefined') {
+      const chama_member = { member: member };
+      details = Object.assign(chama, chama_member);
+    }
+
     if (typeof details === 'object') {
       const {
         member,
