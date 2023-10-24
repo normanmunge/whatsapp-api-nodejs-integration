@@ -15,7 +15,7 @@ app.use(router);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-  console.log('THE REQUEST', req);
+  console.log('THE REQUEST', req.body);
   next(createError(404));
 });
 
