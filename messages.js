@@ -318,8 +318,7 @@ const replyMessage = async (
         user_reply_phone_number
       ).get();
 
-      if (!user_snapshot.size > 0) {
-        console.log('THE USER IS NOT REGISTERED');
+      if (user_snapshot.size < 1) {
         const registrationRef = Joinlist.doc();
         await registrationRef.set({
           name: null,
