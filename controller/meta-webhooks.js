@@ -189,6 +189,8 @@ class MetaWebhookController {
           //TODO: Store the logs for the customer journey i.e their most frequently selected option.
           // console.log('THE MESSAGE IS:', message.button.payload);
           if (typeof message === 'object') {
+            console.log('THE CAHCED MESSAGE ID', cache_message_ids);
+
             if (typeof cache_message_ids[message.id] === 'undefined') {
               switch (message_type) {
                 case 'button':
