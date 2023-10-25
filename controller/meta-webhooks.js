@@ -189,7 +189,7 @@ class MetaWebhookController {
 
           if (typeof message === 'object') {
             console.log(
-              'THE CAHCED MESSAGE ID',
+              'THE CACHED MESSAGE ID',
               MetaWebhookController.cache_message_ids,
               'and',
               message.id
