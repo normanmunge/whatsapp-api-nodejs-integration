@@ -7,7 +7,6 @@ const axios = require('axios');
 
 const { Chama, Reports, ChamaCycleCount } = require('../firebase/Chama');
 const { User, getMember } = require('../firebase/User');
-// const { message_ids } = require('../messages');
 const { triggerStkPush, header_options } = require('./methods');
 const { fetchChamaMemberByPhone } = require('../utils/member');
 const { fetchChama } = require('../utils/chama');
@@ -49,7 +48,7 @@ const sendMessage = (data) => {
 };
 
 const getChamaAccountNumber = async () => {
-  const { phone } = message_ids[0];
+  let phone;
   const member = await getMember(phone);
   const chama_member_snapshot = Chama.doc(member['chama']);
   const chama_doc = await chama_member_snapshot.get();
@@ -103,9 +102,7 @@ router.get('/access_token/', generateAccessToken, async (req, res) => {
 router.post('/create-chama-account/', generateAccessToken, async (req, res) => {
   //todo:: delete account -> 362613 && 625555 && 440026 && 534953
   try {
-    //if (message_ids.length) {
-    const { phone } = message_ids[0];
-    //const phone = '254768154750';
+    const phone = '254768154750';
     const member = await getMember(phone);
 
     const data = {
@@ -191,7 +188,7 @@ router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
 
     if (req.body) {
       chama = req.body.chama || (await getChamaAccountNumber());
-      phone = req.body.phone || message_ids[0].phone;
+      phone = req.body.phone;
     }
     if (chama && phone) {
       await triggerStkPush(chama, phone);
@@ -250,8 +247,6 @@ router.post('/trigger-stk-push/', generateAccessToken, async (req, res) => {
 
     // const { wekeza_account_no, contribution_amount } =
     //   await getChamaAccountNumber();
-
-    // const { phone } = message_ids[0];
     // const data = {
     //   callback_url: `https://${process.env.NGROK_DOMAIN}/stk-push/callback/`,
     //   account: wekeza_account_no,

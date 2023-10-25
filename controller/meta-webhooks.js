@@ -1,6 +1,5 @@
 //messages
 const {
-  getMessageId,
   sendMessage,
   replyMessage,
   getWekezaWelcomeMessage,
@@ -91,7 +90,7 @@ class MetaWebhookController {
               return { type_of_chama, chama_member };
             }
           } catch (error) {
-            console.log('THE ERROR TO GET MEMBER');
+            console.log('THE ERROR TO GET MEMBER - GET CHAMA MEMBER', error);
           }
         };
 
@@ -105,22 +104,6 @@ class MetaWebhookController {
           const { type_of_chama, chama_member } = getChamaMember(
             user_reply_phone_number
           );
-          //TODO: Get the user details from our Database:
-          //1. Their chama details and member profile,
-          try {
-            chama_member = await fetchChamaMemberByPhone(
-              user_reply_phone_number
-            );
-            if (chama_member) {
-              const { chama_id, id } = chama_member;
-              chama = await fetchChama(chama_id, id);
-            }
-          } catch (error) {
-            console.log('THE ERROR TO GET MEMBER');
-          }
-
-          // console.log('THE CHAMA NOW:', chama);
-          //TODO: Store the client details to our database.
 
           //client message details
           const { timestamp, type, text, button } = value.messages[0];
@@ -150,10 +133,8 @@ class MetaWebhookController {
           //   message_text
           // );
 
-          //TODO: Store the user message details to our logs, utilize getMessageId function ie phone, name, message_time, message_type, message_id, message_text
+          //TODO: Store the user message details to our logs
           //After storing the logo, mark message as read
-
-          getMessageId(message_id, user_reply_phone_number, 'individual');
 
           /**
            * Marks the message as received and read with the blue ticks check on Whatsapp.
@@ -255,11 +236,6 @@ class MetaWebhookController {
 
                       req.user_phone = user_reply_phone_number;
 
-                      getMessageId(
-                        message_id,
-                        user_reply_phone_number,
-                        'business'
-                      );
                       return res.sendStatus(200);
                     })
                     .catch((err) => {
@@ -273,7 +249,6 @@ class MetaWebhookController {
               }
               //let's cache this webhook
               cache_message_ids[message.id] = message.id;
-              //MetaWebhookController.cache_message_ids.unshift(message.id);
             }
           }
         }

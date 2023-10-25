@@ -30,7 +30,6 @@ router.post('/', (req, res, next) => {
 
       req.user_phone = user_reply_phone_number;
 
-      getMessageId(message_id, user_reply_phone_number, 'business');
       res.sendStatus(201);
       return;
     })

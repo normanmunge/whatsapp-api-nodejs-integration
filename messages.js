@@ -345,25 +345,11 @@ const replyMessage = async (
   }
 };
 
-const message_ids = [];
-const getMessageId = (messageId, recipient, agent, message) => {
-  message_ids.unshift({
-    id: messageId,
-    phone: recipient,
-    agent: agent,
-    text: typeof message !== 'undefined' ? message : null,
-  });
-
-  return message_ids;
-};
-
 module.exports = {
   sendMessage: sendMessage,
   setChatReply: setChatReply,
   getWekezaWelcomeMessage: getWekezaWelcomeMessage,
   confirmRecipientMessage: confirmRecipientMessage,
-  getMessageId: getMessageId,
   replyMessage: replyMessage,
-  message_ids,
   message_types,
 };
