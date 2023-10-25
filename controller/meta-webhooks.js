@@ -11,7 +11,7 @@ const { fetchChamaMemberByPhone } = require('../utils/member');
 const { fetchChama } = require('../utils/chama');
 class MetaWebhookController {
   static verify_token = process.env.VERIFY_TOKEN;
-  //static cache_message_ids = [];
+  static cache_message_ids = {};
 
   constructor() {}
 
@@ -54,9 +54,6 @@ class MetaWebhookController {
       //Initialise member;
       let chama_member = null;
       let type_of_chama = null;
-
-      //Cache webhooks
-      let cache_message_ids = {};
 
       if (user_reply) {
         //webhook
@@ -187,11 +184,52 @@ class MetaWebhookController {
           //const { type_of_chama, chama_member } = getChamaMember(message_from);
 
           //TODO: Store the logs for the customer journey i.e their most frequently selected option.
-          // console.log('THE MESSAGE IS:', message.button.payload);
-          if (typeof message === 'object') {
-            console.log('THE CAHCED MESSAGE ID', cache_message_ids);
 
-            if (typeof cache_message_ids[message.id] === 'undefined') {
+          console.log('THE MESSAGE IS:', message);
+
+          if (typeof message === 'object') {
+            console.log(
+              'THE CAHCED MESSAGE ID',
+              MetaWebhookController.cache_message_ids,
+              'and',
+              message.id
+            );
+
+            //stop gap
+            if (
+              MetaWebhookController.cache_message_ids.hasOwnProperty(
+                user_reply.id
+              )
+            ) {
+              console.log(
+                'GETS HERE TO CHECK CACHED MESSAGE ID IS SAME AS NEW ONE',
+                MetaWebhookController.cache_message_ids[user_reply.id] ===
+                  message.id
+              );
+              if (
+                MetaWebhookController.cache_message_ids[user_reply.id] ===
+                message.id
+              ) {
+                return;
+              } else {
+                delete MetaWebhookController.cache_message_ids[user_reply.id];
+              }
+            }
+
+            if (
+              !MetaWebhookController.cache_message_ids.hasOwnProperty(
+                user_reply.id
+              )
+            ) {
+              //let's cache this webhook
+              //cache_message_ids[message.id] = message.id;
+              MetaWebhookController.cache_message_ids[user_reply.id] =
+                message.id;
+              console.log(
+                'GETS HERE TO CACHE',
+                MetaWebhookController.cache_message_ids
+              );
+
               switch (message_type) {
                 case 'button':
                   const message_button_payload = await message.button.payload;
@@ -241,7 +279,8 @@ class MetaWebhookController {
                     console.log('User not registered', message);
 
                     if (message) {
-                      cache_message_ids[message.id] = message.id;
+                      MetaWebhookController.cache_message_ids[user_reply.id] =
+                        message.id;
                     }
                     return res.sendStatus(200);
                   }
@@ -270,8 +309,6 @@ class MetaWebhookController {
                 default:
                   break;
               }
-              //let's cache this webhook
-              cache_message_ids[message.id] = message.id;
             }
           }
         }
