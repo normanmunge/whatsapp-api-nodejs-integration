@@ -79,20 +79,34 @@ class MetaWebhookController {
         const { value } = changes[0];
         let user_reply_initiated = false;
 
+        //Start of Reusable functions
         const getChamaMember = async (user_reply_phone_number) => {
           try {
-            chama_member = await fetchChamaMemberByPhone(
+            const current_user_member = await fetchChamaMemberByPhone(
               user_reply_phone_number
             );
-            if (chama_member) {
-              const { chama_id, id } = chama_member;
-              type_of_chama = await fetchChama(chama_id, id);
-              return { type_of_chama, chama_member };
+
+            if (current_user_member?.id) {
+              const { chama_id, id } = current_user_member;
+
+              const current_user_chama = await fetchChama(chama_id, id);
+              return { current_user_chama, current_user_chama };
             }
           } catch (error) {
             console.log('THE ERROR TO GET MEMBER - GET CHAMA MEMBER', error);
           }
         };
+
+        const message_to_send = async (type, phone) => {
+          return await replyMessage(
+            message_types[type],
+            user_reply_initiated,
+            phone,
+            type_of_chama,
+            chama_member
+          );
+        };
+        //End of Reusable functions
 
         //message received from user
         if (typeof value['contacts'] !== 'undefined' && value.contacts.length) {
@@ -101,9 +115,12 @@ class MetaWebhookController {
           const user_reply_name = profile.name;
           const user_reply_phone_number = wa_id;
 
-          const { type_of_chama, chama_member } = getChamaMember(
+          const getUserChamaDetails = await getChamaMember(
             user_reply_phone_number
           );
+
+          chama_member = getUserChamaDetails['current_user_chama'];
+          type_of_chama = getUserChamaDetails['current_user_chama'];
 
           //client message details
           const { timestamp, type, text, button } = value.messages[0];
@@ -153,7 +170,9 @@ class MetaWebhookController {
                 }
               })
               .catch((err) => {
-                console.log('THE ERROR:');
+                console.log(
+                  'THE ERROR SENDIND DATA THAT USER REPLY IS INITIATED:'
+                );
                 res.end();
               });
           }
@@ -165,29 +184,22 @@ class MetaWebhookController {
           const message_type = message.type;
           const message_from = message.from; //user phone number;
 
-          const { type_of_chama, chama_member } = getChamaMember(message_from);
+          //const { type_of_chama, chama_member } = getChamaMember(message_from);
+
           //TODO: Store the logs for the customer journey i.e their most frequently selected option.
           // console.log('THE MESSAGE IS:', message.button.payload);
           if (typeof message === 'object') {
             if (typeof cache_message_ids[message.id] === 'undefined') {
-              const message_to_send = async (type) => {
-                return await replyMessage(
-                  message_types[type],
-                  user_reply_initiated,
-                  message_from,
-                  type_of_chama,
-                  chama_member
-                );
-              };
               switch (message_type) {
                 case 'button':
                   const message_button_payload = await message.button.payload;
                   let chama_profile_text = setChamaProfileText();
                   switch (message_button_payload) {
                     case chama_profile_text:
-                      return await message_to_send('chama_profile');
-
-                      break;
+                      return await message_to_send(
+                        'chama_profile',
+                        message_from
+                      );
                     case 'Send Contribution':
                       /**
                        * Check next recipient
@@ -195,13 +207,19 @@ class MetaWebhookController {
                        * If send, prompt STK push
                        * If no, give options and let user choose
                        */
-                      return await message_to_send('send_contrib');
+                      return await message_to_send(
+                        'send_contrib',
+                        message_from
+                      );
                       break;
                     case 'Stop promotions':
                       console.log('STOP THE PROMOTIONS MESSAGES');
                       break;
                     case 'Confirm':
-                      return await message_to_send('send_confirm_contrib');
+                      return await message_to_send(
+                        'send_confirm_contrib',
+                        message_from
+                      );
                       break;
                     default:
                       break;
@@ -213,8 +231,11 @@ class MetaWebhookController {
                   console.log('THE CHAMA MEMBER', checkIfUserRegistered);
 
                   //User isn't registered in our chama.
-                  if (!checkIfUserRegistered) {
-                    const message = await message_to_send('register');
+                  if (!checkIfUserRegistered.hasOwnProperty('id')) {
+                    const message = await message_to_send(
+                      'register',
+                      message_from
+                    );
                     console.log('User not registered', message);
 
                     if (message) {
