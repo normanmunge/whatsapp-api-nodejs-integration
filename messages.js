@@ -189,7 +189,7 @@ const replyMessage = async (
 
         let paid_member_list_reply = '';
 
-        if (paid_members.length) {
+        if (paid_members && paid_members.length) {
           paid_members.forEach((i, ind) => {
             paid_member_list_reply += `${ind + 1}. ${i.name} - +${
               i.phone_number
