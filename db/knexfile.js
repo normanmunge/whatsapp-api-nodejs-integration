@@ -59,7 +59,9 @@ module.exports = {
       database: process.env.PG_DB,
       user: process.env.PG_ADMIN,
       password: process.env.PG_PASS,
-      ssl: serverSupportSSL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     },
     pool: {
       min: 2,
