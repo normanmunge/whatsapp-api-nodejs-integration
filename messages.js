@@ -219,7 +219,7 @@ const replyMessage = async (
           sendMessage(reply)
             .then(async (response) => {
               if (response.status === 200) {
-                return response.statusText;
+                return response.status;
               }
             })
             .catch((err) => {
@@ -331,7 +331,7 @@ const replyMessage = async (
       return sendMessage(wekeza_reply)
         .then((response) => {
           if (response.status === 200) {
-            return response.statusText;
+            return response.status;
           }
         })
         .catch((err) => {
