@@ -239,8 +239,9 @@ class MetaWebhookController {
                     if (message) {
                       cache_message_ids[message.id] = message.id;
                     }
-                    return res.end();
+                    return res.sendStatus(200);
                   }
+
                   const data = getWekezaWelcomeMessage(
                     message_from,
                     'Welcome to Wekeza!'
