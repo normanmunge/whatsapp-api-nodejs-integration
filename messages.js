@@ -159,7 +159,6 @@ const replyMessage = async (
 ) => {
   if (user_reply_initiated) {
     //POSTGRES
-    console.log('the chama member', chama, member);
     let wekeza_reply = null;
     let details;
 
